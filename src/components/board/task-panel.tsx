@@ -30,6 +30,7 @@ import { rejectTask, updateTask } from "@/app/(app)/task-actions";
 import type { BoardActions } from "./board";
 import { Avatar } from "./avatar";
 import { DueDate } from "./due-date";
+import { TaskHistory } from "./task-history";
 
 const STATUS_LABEL = Object.fromEntries(COLUMNS.map((c) => [c.status, c.label]));
 
@@ -239,9 +240,7 @@ function PanelBody({
               <dd>{new Date(task.created_at).toLocaleDateString()}</dd>
             </dl>
 
-            <p className="rounded-md bg-muted px-3 py-2 text-xs text-muted-foreground">
-              Notes and the activity history appear here from step 6.
-            </p>
+            <TaskHistory task={task} people={people} me={me} actions={actions} />
           </>
         )}
       </div>

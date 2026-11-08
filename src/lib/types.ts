@@ -30,6 +30,39 @@ export type Task = {
   created_by: string;
   created_at: string;
   assignee_ids: string[];
+  notes_count: number;
+};
+
+export type Note = {
+  id: string;
+  task_id: string;
+  author_id: string;
+  body: string;
+  is_rejection: boolean;
+  created_at: string;
+  updated_at: string;
+};
+
+export type ActivityAction =
+  | "created"
+  | "assigned"
+  | "grabbed"
+  | "joined"
+  | "left"
+  | "moved"
+  | "approved"
+  | "rejected"
+  | "edited";
+
+export type Activity = {
+  id: number;
+  task_id: string;
+  actor_id: string;
+  action: ActivityAction;
+  from_status: TaskStatus | null;
+  to_status: TaskStatus | null;
+  details: Record<string, unknown>;
+  created_at: string;
 };
 
 /** Minimal person info the board needs for names and avatars. */

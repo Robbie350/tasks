@@ -66,5 +66,5 @@ Admins manage users only: they can't create, be assigned to, move or approve tas
 3. [x] Admin screen
 4. [x] Board (read-only) + create task
 5. [x] Task flow (grab / join / leave / move / approve / reject)
-6. [ ] Task detail panel (notes + activity)
+6. [x] Task detail panel (notes + activity)
 7. [ ] Polish (realtime, filters, overdue, notifications)

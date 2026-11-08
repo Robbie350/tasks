@@ -10,6 +10,7 @@ Each script is safe to run again.
 | `0002_admin_access.sql` | 3 | lets the server's secret key manage profiles (admin screen) |
 | `0003_tasks.sql` | 4 | `tasks`, `task_assignees`, `task_activity`, `create_task()` |
 | `0004_task_flow.sql` | 5 | `task_notes`, `notifications`, grab / join / leave / move / approve / reject / update functions |
+| `0005_notes.sql` | 6 | `add_note`, `edit_note`, `delete_note` (authors only; rejection notes are locked) |
 
 ## Creating the first admin (once)
 

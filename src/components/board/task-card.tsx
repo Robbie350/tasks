@@ -1,6 +1,7 @@
 "use client";
 
 import { useDraggable } from "@dnd-kit/core";
+import { MessageSquare } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { PRIORITY_LABELS, type Person, type Task } from "@/lib/types";
@@ -67,10 +68,22 @@ export function TaskCard({
       </button>
       <span className="sr-only">Priority: {PRIORITY_LABELS[task.priority]}</span>
 
-      {(assignees.length > 0 || task.due_date) && (
+      {(assignees.length > 0 || task.due_date || task.notes_count > 0) && (
         <div className="mt-3 flex items-center justify-between gap-2">
           {assignees.length > 0 ? <AvatarStack people={assignees} /> : <span />}
-          {task.due_date && <DueDate date={task.due_date} done={task.status === "done"} />}
+          <div className="flex items-center gap-3">
+            {task.notes_count > 0 && (
+              <span
+                className="inline-flex items-center gap-1 text-xs text-muted-foreground"
+                title={`${task.notes_count} ${task.notes_count === 1 ? "note" : "notes"}`}
+              >
+                <MessageSquare className="size-3.5" aria-hidden />
+                {task.notes_count}
+                <span className="sr-only">notes</span>
+              </span>
+            )}
+            {task.due_date && <DueDate date={task.due_date} done={task.status === "done"} />}
+          </div>
         </div>
       )}
 
