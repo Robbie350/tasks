@@ -1,4 +1,5 @@
 import { AppHeader } from "@/components/app-header";
+import { PrefsSync } from "@/components/prefs-sync";
 import { RealtimeRefresher } from "@/components/realtime-refresher";
 import { requireProfile } from "@/lib/auth";
 
@@ -9,6 +10,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
     <div className="min-h-screen bg-muted/40">
       <AppHeader profile={profile} />
       <RealtimeRefresher userId={profile.id} />
+      <PrefsSync theme={profile.theme} accent={profile.accent} />
       {children}
     </div>
   );

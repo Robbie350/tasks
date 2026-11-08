@@ -317,10 +317,12 @@ function Column({
       aria-label={label}
       className={cn(
         "flex w-72 shrink-0 flex-col rounded-xl p-3 transition-[opacity,box-shadow] lg:w-auto",
-        isPool ? "border border-dashed border-sky-300 bg-sky-50/70" : "bg-zinc-100",
+        isPool
+          ? "border border-dashed border-sky-300 bg-sky-50/70 dark:border-sky-800 dark:bg-sky-950/30"
+          : "bg-zinc-100 dark:bg-zinc-900",
         state === "blocked" && "opacity-40",
         state === "allowed" && "ring-2 ring-sky-400/60",
-        state === "allowed" && isOver && "ring-sky-500 bg-sky-50"
+        state === "allowed" && isOver && "ring-sky-500 bg-sky-50 dark:bg-sky-950/50"
       )}
     >
       <header className="mb-3 flex items-center justify-between px-1">

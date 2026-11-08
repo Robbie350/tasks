@@ -26,7 +26,7 @@ export function DueDate({ date, done }: { date: string; done: boolean }) {
     <span
       className={cn(
         "inline-flex items-center gap-1 text-xs",
-        overdue ? "font-medium text-red-600" : "text-muted-foreground"
+        overdue ? "font-medium text-red-600 dark:text-red-400" : "text-muted-foreground"
       )}
       title={overdue ? "Overdue" : "Due date"}
     >

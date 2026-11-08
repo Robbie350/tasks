@@ -1,6 +1,7 @@
 import "server-only";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { normalizePreferences } from "@/lib/preferences";
 import type { Profile, Role } from "@/lib/types";
 
 /**
@@ -14,13 +15,15 @@ export async function getCurrentProfile(): Promise<Profile | null> {
   const userId = claims?.claims?.sub;
   if (!userId) return null;
 
-  const { data: profile } = await supabase
+  // select("*") keeps working if a newer column hasn't been added yet.
+  const { data: row } = await supabase
     .from("profiles")
-    .select("id, full_name, email, role, is_active, avatar_url, created_at")
+    .select("*")
     .eq("id", userId)
-    .maybeSingle<Profile>();
+    .maybeSingle<Record<string, unknown>>();
 
-  return profile && profile.is_active ? profile : null;
+  if (!row || !row.is_active) return null;
+  return { ...(row as Profile), ...normalizePreferences(row) };
 }
 
 /** For pages: the active profile, or sign out and go to /login (via middleware). */

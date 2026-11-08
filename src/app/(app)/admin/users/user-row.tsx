@@ -37,7 +37,7 @@ export function UserRow({ user, isSelf }: { user: Profile; isSelf: boolean }) {
   }
 
   const message = result && (
-    <p className={result.ok ? "mt-1 text-xs text-green-700" : "mt-1 text-xs text-destructive"}>
+    <p className={result.ok ? "mt-1 text-xs text-green-700 dark:text-green-400" : "mt-1 text-xs text-destructive"}>
       {result.ok ? result.message : result.error}
     </p>
   );

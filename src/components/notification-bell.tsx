@@ -96,13 +96,14 @@ export function NotificationBell() {
                     onClick={() => openItem(n)}
                     className={cn(
                       "flex w-full gap-3 px-4 py-3 text-left text-sm hover:bg-muted",
-                      !n.is_read && "bg-sky-50/60"
+                      !n.is_read && "bg-sky-50/60 dark:bg-sky-950/30"
                     )}
                   >
                     <span
                       className={cn(
                         "mt-0.5 flex size-7 shrink-0 items-center justify-center rounded-full",
-                        n.type === "rejected" ? "bg-red-100 text-red-700" : "bg-sky-100 text-sky-700"
+                        n.type === "rejected" ? "bg-red-100 text-red-700 dark:bg-red-950 dark:text-red-300"
+                          : "bg-sky-100 text-sky-700 dark:bg-sky-950 dark:text-sky-300"
                       )}
                     >
                       {n.type === "rejected" ? <Undo2 className="size-3.5" /> : <UserPlus className="size-3.5" />}

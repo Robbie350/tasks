@@ -8,6 +8,9 @@ export type Profile = {
   is_active: boolean;
   avatar_url: string | null;
   created_at: string;
+  theme: import("@/lib/preferences").Theme;
+  accent: import("@/lib/preferences").Accent;
+  locale: import("@/lib/preferences").Locale;
 };
 
 export const ROLE_LABELS: Record<Role, string> = {

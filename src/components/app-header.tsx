@@ -19,10 +19,14 @@ export function AppHeader({ profile }: { profile: Profile }) {
       </div>
       <div className="flex items-center gap-3">
         {profile.role !== "admin" && <NotificationBell />}
-        <div className="hidden text-right leading-tight sm:block">
+        <Link
+          href="/account"
+          title="My account"
+          className="hidden rounded-md px-2 py-1 text-right leading-tight hover:bg-muted sm:block"
+        >
           <p className="text-sm font-medium">{profile.full_name}</p>
           <p className="text-xs text-muted-foreground">{ROLE_LABELS[profile.role]}</p>
-        </div>
+        </Link>
         <form action={signOut}>
           <Button type="submit" variant="outline" size="sm">
             Sign out

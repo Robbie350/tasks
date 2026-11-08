@@ -80,3 +80,61 @@
     font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
   }
 }
+
+/* ---------------------------------------------------------------------------
+   Themes: <html class="dark"> for dark mode, data-accent="…" for the accent.
+   The accent recolours primary buttons, focus rings and highlights.
+   --------------------------------------------------------------------------- */
+.dark {
+  color-scheme: dark;
+}
+
+[data-accent="blue"] {
+  --primary: oklch(0.546 0.245 262.881);
+  --primary-foreground: oklch(0.985 0 0);
+  --ring: oklch(0.623 0.214 259.815);
+}
+.dark[data-accent="blue"] {
+  --primary: oklch(0.623 0.214 259.815);
+  --primary-foreground: oklch(0.985 0 0);
+}
+
+[data-accent="green"] {
+  --primary: oklch(0.527 0.154 150.069);
+  --primary-foreground: oklch(0.985 0 0);
+  --ring: oklch(0.627 0.194 149.214);
+}
+.dark[data-accent="green"] {
+  --primary: oklch(0.723 0.219 149.579);
+  --primary-foreground: oklch(0.145 0 0);
+}
+
+[data-accent="violet"] {
+  --primary: oklch(0.541 0.281 293.009);
+  --primary-foreground: oklch(0.985 0 0);
+  --ring: oklch(0.606 0.25 292.717);
+}
+.dark[data-accent="violet"] {
+  --primary: oklch(0.606 0.25 292.717);
+  --primary-foreground: oklch(0.985 0 0);
+}
+
+[data-accent="orange"] {
+  --primary: oklch(0.553 0.195 38.402);
+  --primary-foreground: oklch(0.985 0 0);
+  --ring: oklch(0.705 0.213 47.604);
+}
+.dark[data-accent="orange"] {
+  --primary: oklch(0.705 0.213 47.604);
+  --primary-foreground: oklch(0.145 0 0);
+}
+
+[data-accent="rose"] {
+  --primary: oklch(0.586 0.253 17.585);
+  --primary-foreground: oklch(0.985 0 0);
+  --ring: oklch(0.645 0.246 16.439);
+}
+.dark[data-accent="rose"] {
+  --primary: oklch(0.645 0.246 16.439);
+  --primary-foreground: oklch(0.985 0 0);
+}

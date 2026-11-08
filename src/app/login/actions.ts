@@ -1,6 +1,8 @@
 "use server";
 
+import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
+import { PREF_COOKIES, normalizePreferences } from "@/lib/preferences";
 import { createClient } from "@/lib/supabase/server";
 
 export type LoginState = { error: string | null; email: string };
@@ -24,9 +26,9 @@ export async function login(_prev: LoginState, formData: FormData): Promise<Logi
   // RLS hides profiles from deactivated users, so no row = not allowed in.
   const { data: profile } = await supabase
     .from("profiles")
-    .select("id, is_active")
+    .select("*")
     .eq("id", data.user.id)
-    .maybeSingle();
+    .maybeSingle<Record<string, unknown>>();
 
   if (!profile || !profile.is_active) {
     await supabase.auth.signOut();
@@ -35,6 +37,14 @@ export async function login(_prev: LoginState, formData: FormData): Promise<Logi
       email,
     };
   }
+
+  // Bring this user's theme, accent and language to this browser.
+  const prefs = normalizePreferences(profile);
+  const jar = await cookies();
+  const opts = { path: "/", maxAge: 60 * 60 * 24 * 365, sameSite: "lax" as const };
+  jar.set(PREF_COOKIES.theme, prefs.theme, opts);
+  jar.set(PREF_COOKIES.accent, prefs.accent, opts);
+  jar.set(PREF_COOKIES.locale, prefs.locale, opts);
 
   redirect("/");
 }

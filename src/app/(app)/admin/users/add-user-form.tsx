@@ -89,7 +89,7 @@ export function AddUserForm() {
           {state && (
             <p
               role="status"
-              className={state.ok ? "text-sm text-green-700" : "text-sm text-destructive"}
+              className={state.ok ? "text-sm text-green-700 dark:text-green-400" : "text-sm text-destructive"}
             >
               {state.ok ? state.message : state.error}
             </p>

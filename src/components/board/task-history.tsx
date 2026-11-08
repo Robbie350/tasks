@@ -173,7 +173,7 @@ function NoteItem({
     <li
       className={cn(
         "rounded-lg border p-3",
-        note.is_rejection ? "border-red-200 bg-red-50" : "bg-background"
+        note.is_rejection ? "border-red-200 bg-red-50 dark:border-red-900 dark:bg-red-950/40" : "bg-background"
       )}
     >
       <div className="mb-1.5 flex flex-wrap items-center gap-2 text-xs">
@@ -185,7 +185,7 @@ function NoteItem({
           {edited && " · edited"}
         </span>
         {note.is_rejection && (
-          <span className="ml-auto rounded-full bg-red-100 px-2 py-0.5 font-medium text-red-700">
+          <span className="ml-auto rounded-full bg-red-100 px-2 py-0.5 font-medium text-red-700 dark:bg-red-950 dark:text-red-300">
             Rejection
           </span>
         )}

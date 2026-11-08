@@ -70,3 +70,13 @@ Admins manage users only: they can't create, be assigned to, move or approve tas
 5. [x] Task flow (grab / join / leave / move / approve / reject)
 6. [x] Task detail panel (notes + activity)
 7. [x] Polish (realtime, filters, overdue, notifications)
+
+### After v1
+
+- [x] A: My account (name, password) and themes (light / dark / system, accent colour)
+- [ ] B: Languages (English, Russian, Uzbek)
+- [ ] C: Personal board
+- [ ] D: Phone layout, archive Done, search and labels
+- [ ] E: Checklists and attachments on team tasks
+- [ ] F: Reports
+- [ ] G: Telegram / email notifications
