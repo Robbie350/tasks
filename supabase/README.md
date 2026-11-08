@@ -7,6 +7,7 @@ Each script is safe to run again.
 | File | Step | What it creates |
 |---|---|---|
 | `0001_profiles.sql` | 2 | `profiles` table, roles, auto-profile trigger, security rules |
+| `0002_admin_access.sql` | 3 | lets the server's secret key manage profiles (admin screen) |
 
 ## Creating the first admin (once)
 

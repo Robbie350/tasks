@@ -30,6 +30,8 @@ See [deploy/DEPLOY.md](deploy/DEPLOY.md): DNS, Coolify app setup, environment va
 - `supabase/` – database scripts and first-admin setup ([supabase/README.md](supabase/README.md))
 - `src/middleware.ts` – refreshes the session, sends signed-out visitors to `/login`
 - `src/lib/auth.ts` – `requireProfile()` / `requireRole()` for pages and server actions
+- `src/lib/supabase/admin.ts` – secret-key client, server-only; used after an admin check
+- `src/app/(app)/admin/users/` – user management (admin only)
 
 ## Security rules
 
@@ -41,7 +43,7 @@ See [deploy/DEPLOY.md](deploy/DEPLOY.md): DNS, Coolify app setup, environment va
 
 1. [x] Project setup
 2. [x] Auth and roles
-3. [ ] Admin screen
+3. [x] Admin screen
 4. [ ] Board (read-only) + create task
 5. [ ] Task flow (grab / join / leave / move / approve / reject)
 6. [ ] Task detail panel (notes + activity)
