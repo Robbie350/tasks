@@ -81,3 +81,12 @@ export const PRIORITY_LABELS: Record<TaskPriority, string> = {
   medium: "Medium",
   high: "High",
 };
+
+export type AppNotification = {
+  id: string;
+  task_id: string;
+  type: "assigned" | "rejected";
+  is_read: boolean;
+  created_at: string;
+  task_title: string;
+};

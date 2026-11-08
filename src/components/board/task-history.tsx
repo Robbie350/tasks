@@ -7,25 +7,11 @@ import { cn } from "@/lib/utils";
 import { COLUMNS, type Activity, type Note, type Person, type Task } from "@/lib/types";
 import type { Me } from "@/lib/rules";
 import { addNote, deleteNote, editNote, getTaskDetails } from "@/app/(app)/task-actions";
+import { timeAgo } from "@/lib/time";
 import type { BoardActions } from "./board";
 import { Avatar } from "./avatar";
 
 const STATUS_LABEL = Object.fromEntries(COLUMNS.map((c) => [c.status, c.label]));
-
-// ---------------------------------------------------------------------------
-// Time helpers: "2h ago", with the full date on hover.
-// ---------------------------------------------------------------------------
-const rtf = new Intl.RelativeTimeFormat("en", { numeric: "auto" });
-
-export function timeAgo(iso: string, now = Date.now()) {
-  const seconds = Math.round((new Date(iso).getTime() - now) / 1000);
-  const abs = Math.abs(seconds);
-  if (abs < 45) return "just now";
-  if (abs < 3600) return rtf.format(Math.round(seconds / 60), "minute");
-  if (abs < 86400) return rtf.format(Math.round(seconds / 3600), "hour");
-  if (abs < 86400 * 7) return rtf.format(Math.round(seconds / 86400), "day");
-  return new Date(iso).toLocaleDateString(undefined, { day: "numeric", month: "short", year: "numeric" });
-}
 
 function Time({ iso }: { iso: string }) {
   return (

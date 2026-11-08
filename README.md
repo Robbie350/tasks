@@ -35,6 +35,8 @@ See [deploy/DEPLOY.md](deploy/DEPLOY.md): DNS, Coolify app setup, environment va
 - `src/lib/rules.ts` – which buttons / drop targets the UI offers (the database enforces the same rules)
 - `src/app/(app)/task-actions.ts` – server actions that call the task database functions
 - `src/components/board/` – board, cards, drag and drop, task panel
+- `src/components/realtime-refresher.tsx` – live updates (Supabase Realtime → refresh)
+- `src/components/notification-bell.tsx` – in-app notifications
 
 ## Task flow rules (agreed)
 
@@ -67,4 +69,4 @@ Admins manage users only: they can't create, be assigned to, move or approve tas
 4. [x] Board (read-only) + create task
 5. [x] Task flow (grab / join / leave / move / approve / reject)
 6. [x] Task detail panel (notes + activity)
-7. [ ] Polish (realtime, filters, overdue, notifications)
+7. [x] Polish (realtime, filters, overdue, notifications)

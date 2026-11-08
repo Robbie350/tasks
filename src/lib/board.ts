@@ -8,10 +8,14 @@ type TaskRow = Omit<Task, "assignee_ids" | "notes_count"> & {
 };
 
 /** Everything the board screen needs, read with the user's own session (RLS applies). */
-export async function getBoardData(): Promise<{ tasks: Task[]; people: Person[] }> {
+export async function getBoardData(): Promise<{
+  tasks: Task[];
+  people: Person[];
+  unreadTaskIds: string[];
+}> {
   const supabase = await createClient();
 
-  const [tasksRes, peopleRes] = await Promise.all([
+  const [tasksRes, peopleRes, unreadRes] = await Promise.all([
     supabase
       .from("tasks")
       .select(
@@ -24,6 +28,8 @@ export async function getBoardData(): Promise<{ tasks: Task[]; people: Person[] 
       .select("id, full_name, role, is_active")
       .order("full_name")
       .returns<Person[]>(),
+    // RLS returns only the signed-in user's own notifications.
+    supabase.from("notifications").select("task_id").eq("is_read", false),
   ]);
 
   if (tasksRes.error) throw new Error(`Couldn't load tasks: ${tasksRes.error.message}`);
@@ -37,5 +43,7 @@ export async function getBoardData(): Promise<{ tasks: Task[]; people: Person[] 
     notes_count: task_notes[0]?.count ?? 0,
   }));
 
-  return { tasks, people: peopleRes.data ?? [] };
+  const unreadTaskIds = [...new Set((unreadRes.data ?? []).map((n) => n.task_id as string))];
+
+  return { tasks, people: peopleRes.data ?? [], unreadTaskIds };
 }

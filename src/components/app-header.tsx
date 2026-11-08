@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { NavLink } from "@/components/nav-link";
+import { NotificationBell } from "@/components/notification-bell";
 import { signOut } from "@/app/auth/actions";
 import { ROLE_LABELS, type Profile } from "@/lib/types";
 
@@ -17,6 +18,7 @@ export function AppHeader({ profile }: { profile: Profile }) {
         </nav>
       </div>
       <div className="flex items-center gap-3">
+        {profile.role !== "admin" && <NotificationBell />}
         <div className="hidden text-right leading-tight sm:block">
           <p className="text-sm font-medium">{profile.full_name}</p>
           <p className="text-xs text-muted-foreground">{ROLE_LABELS[profile.role]}</p>

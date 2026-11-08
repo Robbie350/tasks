@@ -11,6 +11,7 @@ import {
   type DragEndEvent,
   type DragStartEvent,
 } from "@dnd-kit/core";
+import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { COLUMNS, type Person, type Task, type TaskStatus } from "@/lib/types";
 import { dropTargets, type Me } from "@/lib/rules";
@@ -22,6 +23,9 @@ import {
   moveTask,
   type ActionResult,
 } from "@/app/(app)/task-actions";
+import { markNotificationsRead } from "@/app/(app)/notification-actions";
+import { OPEN_TASK } from "@/components/notification-bell";
+import { Select } from "@/components/ui/select";
 import { TaskCard } from "./task-card";
 import { TaskPanel } from "./task-panel";
 
@@ -55,8 +59,40 @@ export type BoardActions = {
   run: (fn: () => Promise<ActionResult>) => Promise<boolean>;
 };
 
-export function Board({ tasks, people, me }: { tasks: Task[]; people: Person[]; me: Me }) {
+const FILTER_KEY = "board-filter";
+
+export function Board({
+  tasks,
+  people,
+  me,
+  unreadTaskIds = [],
+  toolbarEnd,
+}: {
+  tasks: Task[];
+  people: Person[];
+  me: Me;
+  unreadTaskIds?: string[];
+  toolbarEnd?: React.ReactNode;
+}) {
   const peopleById = useMemo(() => new Map(people.map((p) => [p.id, p])), [people]);
+  const unread = useMemo(() => new Set(unreadTaskIds), [unreadTaskIds]);
+  const isWorker = me.role !== "admin";
+
+  // Filter: "" = everyone, otherwise a person's id (me.id = "My tasks").
+  const [filter, setFilter] = useState("");
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem(FILTER_KEY);
+      if (saved && (saved === me.id || people.some((p) => p.id === saved))) setFilter(saved);
+    } catch {}
+  }, [me.id, people]);
+  const changeFilter = (value: string) => {
+    setFilter(value);
+    try {
+      localStorage.setItem(FILTER_KEY, value);
+    } catch {}
+  };
+  const filterPeople = people.filter((p) => p.is_active && p.role !== "admin");
   const [optimisticTasks, preview] = useOptimistic(tasks, applyChange);
   const [, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
@@ -123,15 +159,73 @@ export function Board({ tasks, people, me }: { tasks: Task[]; people: Person[]; 
     else if (task.status === "review" && to === "done") actions.approve(task);
     else if (task.status === "review" && to === "in_progress") {
       // A rejection needs a note: open the panel with the note box ready.
-      setRejectMode(true);
-      setOpenId(task.id);
+      openPanel(task.id, true);
     } else actions.move(task, to);
   }
+
+  function openPanel(taskId: string, reject = false) {
+    setRejectMode(reject);
+    setOpenId(taskId);
+    // Opening a task counts as seeing its notifications.
+    if (unread.has(taskId)) markNotificationsRead({ taskId });
+  }
+
+  // The notification bell asks the board to open a task.
+  useEffect(() => {
+    const onOpenTask = (e: Event) => {
+      const id = (e as CustomEvent<string>).detail;
+      setRejectMode(false);
+      setOpenId(id);
+    };
+    window.addEventListener(OPEN_TASK, onOpenTask);
+    return () => window.removeEventListener(OPEN_TASK, onOpenTask);
+  }, []);
+
+  // Filters apply to every column except Unassigned, which is the shared pool.
+  const visible = (t: Task) =>
+    !filter || t.status === "unassigned" || t.assignee_ids.includes(filter);
 
   const openTask = optimisticTasks.find((t) => t.id === openId) ?? null;
 
   return (
     <>
+      <div className="mb-4 flex flex-wrap items-center gap-3">
+        <h1 className="mr-2 text-xl font-semibold tracking-tight">Board</h1>
+        {isWorker && (
+          <Button
+            variant={filter === me.id ? "default" : "outline"}
+            size="sm"
+            aria-pressed={filter === me.id}
+            onClick={() => changeFilter(filter === me.id ? "" : me.id)}
+          >
+            My tasks
+          </Button>
+        )}
+        <Select
+          aria-label="Filter by person"
+          className="h-8 w-auto min-w-40"
+          value={filter && filter !== me.id ? filter : ""}
+          onChange={(e) => changeFilter(e.target.value)}
+        >
+          <option value="">Everyone</option>
+          {filterPeople.map((p) => (
+            <option key={p.id} value={p.id}>
+              {p.full_name}
+              {p.id === me.id ? " (you)" : ""}
+            </option>
+          ))}
+        </Select>
+        {filter && (
+          <button
+            className="text-xs text-muted-foreground underline-offset-4 hover:underline"
+            onClick={() => changeFilter("")}
+          >
+            Clear filter
+          </button>
+        )}
+        <div className="ml-auto">{toolbarEnd}</div>
+      </div>
+
       <DndContext
         sensors={sensors}
         onDragStart={onDragStart}
@@ -145,7 +239,7 @@ export function Board({ tasks, people, me }: { tasks: Task[]; people: Person[]; 
               status={col.status}
               label={col.label}
               tasks={optimisticTasks
-                .filter((t) => t.status === col.status)
+                .filter((t) => t.status === col.status && visible(t))
                 .sort((a, b) => a.position - b.position)}
               state={
                 !dragging || col.status === dragging.status
@@ -161,10 +255,8 @@ export function Board({ tasks, people, me }: { tasks: Task[]; people: Person[]; 
                   people={peopleById}
                   me={me}
                   draggable={dropTargets(task, me).length > 0}
-                  onOpen={() => {
-                    setRejectMode(false);
-                    setOpenId(task.id);
-                  }}
+                  isNew={unread.has(task.id)}
+                  onOpen={() => openPanel(task.id)}
                   onGrab={() => actions.grab(task)}
                 />
               )}

@@ -21,6 +21,7 @@ export function TaskCard({
   me,
   draggable,
   overlay = false,
+  isNew = false,
   onOpen,
   onGrab,
 }: {
@@ -29,6 +30,7 @@ export function TaskCard({
   me: Me;
   draggable: boolean;
   overlay?: boolean;
+  isNew?: boolean;
   onOpen?: () => void;
   onGrab?: () => void;
 }) {
@@ -47,7 +49,7 @@ export function TaskCard({
       {...(overlay ? {} : listeners)}
       onClick={onOpen}
       className={cn(
-        "rounded-lg border border-l-4 bg-card p-3 shadow-xs transition-shadow hover:shadow-sm",
+        "relative rounded-lg border border-l-4 bg-card p-3 shadow-xs transition-shadow hover:shadow-sm",
         PRIORITY_EDGE[task.priority],
         draggable && "cursor-grab active:cursor-grabbing",
         !draggable && onOpen && "cursor-pointer",
@@ -55,6 +57,14 @@ export function TaskCard({
         overlay && "rotate-2 cursor-grabbing shadow-lg"
       )}
     >
+      {isNew && (
+        <span
+          className="absolute top-2 right-2 size-2.5 rounded-full bg-sky-500 ring-2 ring-card"
+          title="New for you"
+        >
+          <span className="sr-only">New for you</span>
+        </span>
+      )}
       {/* The title is a real button so keyboard users can open the task. */}
       <button
         type="button"
@@ -62,7 +72,7 @@ export function TaskCard({
           e.stopPropagation();
           onOpen?.();
         }}
-        className="text-left text-sm leading-snug font-medium break-words outline-none focus-visible:underline"
+        className="pr-3 text-left text-sm leading-snug font-medium break-words outline-none focus-visible:underline"
       >
         {task.title}
       </button>
