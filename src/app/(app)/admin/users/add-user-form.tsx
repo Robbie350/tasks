@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select } from "@/components/ui/select";
+import { useT } from "@/i18n/client";
 import { createUser, type ActionResult } from "./actions";
 
 function generatePassword() {
@@ -16,8 +17,14 @@ function generatePassword() {
 export function AddUserForm() {
   const [open, setOpen] = useState(false);
   const [password, setPassword] = useState("");
+  const { t, tr } = useT();
   const [state, formAction, pending] = useActionState<ActionResult | null, FormData>(
-    createUser,
+    async (prev, fd) => {
+      const res = await createUser(prev, fd);
+      return res.ok
+        ? { ok: true, message: t("users.created", { name: String(fd.get("full_name")), email: String(fd.get("email")) }) }
+        : res;
+    },
     null
   );
   const formRef = useRef<HTMLFormElement>(null);
@@ -30,37 +37,37 @@ export function AddUserForm() {
   }, [state]);
 
   if (!open) {
-    return <Button onClick={() => setOpen(true)}>+ Add user</Button>;
+    return <Button onClick={() => setOpen(true)}>{t("users.add")}</Button>;
   }
 
   return (
     <div className="w-full rounded-xl border bg-card p-5 shadow-sm">
       <div className="mb-4 flex items-center justify-between">
-        <h2 className="font-semibold">Add user</h2>
+        <h2 className="font-semibold">{t("users.addHeading")}</h2>
         <Button variant="ghost" size="sm" onClick={() => setOpen(false)}>
-          Close
+          {t("common.close")}
         </Button>
       </div>
 
       <form ref={formRef} action={formAction} className="grid gap-4 sm:grid-cols-2">
         <div className="space-y-2">
-          <Label htmlFor="new-name">Full name</Label>
+          <Label htmlFor="new-name">{t("users.fullName")}</Label>
           <Input id="new-name" name="full_name" required maxLength={100} />
         </div>
         <div className="space-y-2">
-          <Label htmlFor="new-email">Email</Label>
+          <Label htmlFor="new-email">{t("users.email")}</Label>
           <Input id="new-email" name="email" type="email" required autoComplete="off" />
         </div>
         <div className="space-y-2">
-          <Label htmlFor="new-role">Role</Label>
+          <Label htmlFor="new-role">{t("users.role")}</Label>
           <Select id="new-role" name="role" defaultValue="specialist">
-            <option value="specialist">Specialist</option>
-            <option value="manager">Manager</option>
-            <option value="admin">Admin</option>
+            <option value="specialist">{t("roles.specialist")}</option>
+            <option value="manager">{t("roles.manager")}</option>
+            <option value="admin">{t("roles.admin")}</option>
           </Select>
         </div>
         <div className="space-y-2">
-          <Label htmlFor="new-password">Starting password</Label>
+          <Label htmlFor="new-password">{t("users.startPassword")}</Label>
           <div className="flex gap-2">
             <Input
               id="new-password"
@@ -74,24 +81,24 @@ export function AddUserForm() {
               className="font-mono"
             />
             <Button type="button" variant="outline" onClick={() => setPassword(generatePassword())}>
-              Generate
+              {t("users.generate")}
             </Button>
           </div>
           <p className="text-xs text-muted-foreground">
-            At least 8 characters. Give it to the person privately.
+            {t("users.passwordHint")}
           </p>
         </div>
 
         <div className="flex items-center gap-3 sm:col-span-2">
           <Button type="submit" disabled={pending}>
-            {pending ? "Creating…" : "Create user"}
+            {pending ? t("users.creating") : t("users.create")}
           </Button>
           {state && (
             <p
               role="status"
               className={state.ok ? "text-sm text-green-700 dark:text-green-400" : "text-sm text-destructive"}
             >
-              {state.ok ? state.message : state.error}
+              {state.ok ? state.message : tr(state.error)}
             </p>
           )}
         </div>

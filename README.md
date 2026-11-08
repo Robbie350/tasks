@@ -32,6 +32,7 @@ See [deploy/DEPLOY.md](deploy/DEPLOY.md): DNS, Coolify app setup, environment va
 - `src/lib/auth.ts` – `requireProfile()` / `requireRole()` for pages and server actions
 - `src/lib/supabase/admin.ts` – secret-key client, server-only; used after an admin check
 - `src/app/(app)/admin/users/` – user management (admin only)
+- `src/i18n/` – translations: `en.ts` is the source; `ru.ts` and `uz.ts` must have the same keys (TypeScript checks this). Server text: `getI18n()`; client text: `useT()`
 - `src/lib/rules.ts` – which buttons / drop targets the UI offers (the database enforces the same rules)
 - `src/app/(app)/task-actions.ts` – server actions that call the task database functions
 - `src/components/board/` – board, cards, drag and drop, task panel
@@ -74,7 +75,7 @@ Admins manage users only: they can't create, be assigned to, move or approve tas
 ### After v1
 
 - [x] A: My account (name, password) and themes (light / dark / system, accent colour)
-- [ ] B: Languages (English, Russian, Uzbek)
+- [x] B: Languages (English, Russian, Uzbek)
 - [ ] C: Personal board
 - [ ] D: Phone layout, archive Done, search and labels
 - [ ] E: Checklists and attachments on team tasks

@@ -4,9 +4,11 @@ import { useActionState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { useT } from "@/i18n/client";
 import { login, type LoginState } from "./actions";
 
 export function LoginForm({ initialError }: { initialError: string | null }) {
+  const { t, tr } = useT();
   const [state, formAction, pending] = useActionState<LoginState, FormData>(login, {
     error: initialError,
     email: "",
@@ -15,7 +17,7 @@ export function LoginForm({ initialError }: { initialError: string | null }) {
   return (
     <form action={formAction} className="space-y-4">
       <div className="space-y-2">
-        <Label htmlFor="email">Email</Label>
+        <Label htmlFor="email">{t("login.email")}</Label>
         <Input
           id="email"
           name="email"
@@ -27,7 +29,7 @@ export function LoginForm({ initialError }: { initialError: string | null }) {
         />
       </div>
       <div className="space-y-2">
-        <Label htmlFor="password">Password</Label>
+        <Label htmlFor="password">{t("login.password")}</Label>
         <Input
           id="password"
           name="password"
@@ -40,12 +42,12 @@ export function LoginForm({ initialError }: { initialError: string | null }) {
 
       {state.error && (
         <p role="alert" className="rounded-md bg-destructive/10 px-3 py-2 text-sm text-destructive">
-          {state.error}
+          {tr(state.error)}
         </p>
       )}
 
       <Button type="submit" className="w-full" disabled={pending}>
-        {pending ? "Signing in…" : "Sign in"}
+        {pending ? t("login.submitting") : t("login.submit")}
       </Button>
     </form>
   );

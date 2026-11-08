@@ -4,19 +4,21 @@ import { useCallback, useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
-import { COLUMNS, type Activity, type Note, type Person, type Task } from "@/lib/types";
+import type { Activity, Note, Person, Task } from "@/lib/types";
+import { useT } from "@/i18n/client";
+import type { Translator } from "@/i18n";
 import type { Me } from "@/lib/rules";
 import { addNote, deleteNote, editNote, getTaskDetails } from "@/app/(app)/task-actions";
 import { timeAgo } from "@/lib/time";
 import type { BoardActions } from "./board";
 import { Avatar } from "./avatar";
 
-const STATUS_LABEL = Object.fromEntries(COLUMNS.map((c) => [c.status, c.label]));
 
 function Time({ iso }: { iso: string }) {
+  const { t, locale } = useT();
   return (
-    <time dateTime={iso} title={new Date(iso).toLocaleString()}>
-      {timeAgo(iso)}
+    <time dateTime={iso} title={new Date(iso).toLocaleString(locale)}>
+      {timeAgo(iso, locale, t("history.justNow"))}
     </time>
   );
 }
@@ -24,29 +26,36 @@ function Time({ iso }: { iso: string }) {
 // ---------------------------------------------------------------------------
 // Activity sentences, e.g. "Aziz moved this to Review".
 // ---------------------------------------------------------------------------
-function describe(a: Activity, people: Map<string, Person>) {
-  const name = (id: unknown) => (typeof id === "string" && people.get(id)?.full_name) || "someone";
-  const to = a.to_status ? STATUS_LABEL[a.to_status] : "";
+function describe(a: Activity, people: Map<string, Person>, t: Translator["t"]) {
+  const name = (id: unknown) =>
+    (typeof id === "string" && people.get(id)?.full_name) || t("common.someone");
+  const column = a.to_status ? t(`status.${a.to_status}`) : "";
   switch (a.action) {
     case "created":
-      return `created this task in ${to}`;
+      return t("history.created", { column });
     case "assigned":
-      return `assigned ${name(a.details.user_id)}`;
+      return t("history.assigned", { name: name(a.details.user_id) });
     case "grabbed":
-      return "grabbed this task";
+      return t("history.grabbed");
     case "joined":
-      return "joined";
+      return t("history.joined");
     case "left":
-      return a.to_status === "unassigned" ? "left — it went back to Unassigned" : "left";
+      return a.to_status === "unassigned" ? t("history.leftUnassigned") : t("history.left");
     case "moved":
-      return `moved this to ${to}`;
+      return t("history.moved", { column });
     case "approved":
-      return "approved this → Done";
+      return t("history.approved");
     case "rejected":
-      return "rejected this → In Progress";
+      return t("history.rejected");
     case "edited": {
       const fields = Array.isArray(a.details.fields) ? (a.details.fields as string[]) : [];
-      return fields.length ? `edited the ${fields.join(", ")}` : "edited this task";
+      const label = (f: string) =>
+        f === "due date" ? t("history.fields.dueDate")
+        : f === "title" || f === "description" || f === "priority" ? t(`history.fields.${f}`)
+        : f;
+      return fields.length
+        ? t("history.editedFields", { fields: fields.map(label).join(", ") })
+        : t("history.editedGeneric");
     }
     default:
       return a.action;
@@ -66,6 +75,7 @@ export function TaskHistory({
   me: Me;
   actions: BoardActions;
 }) {
+  const { t, tr } = useT();
   const [tab, setTab] = useState<"notes" | "activity">("notes");
   const [notes, setNotes] = useState<Note[] | null>(null);
   const [activity, setActivity] = useState<Activity[] | null>(null);
@@ -78,9 +88,9 @@ export function TaskHistory({
       setActivity(res.activity);
       setLoadError(null);
     } else {
-      setLoadError(res.error);
+      setLoadError(tr(res.error));
     }
-  }, [task.id]);
+  }, [task.id, tr]);
 
   // Reload when the task changes (moved, joined, edited, new note...).
   const version = [task.status, task.assignee_ids.join(), task.notes_count, task.title, task.priority, task.due_date, task.description].join("|");
@@ -92,21 +102,23 @@ export function TaskHistory({
 
   return (
     <section className="space-y-3">
-      <div role="tablist" aria-label="Task history" className="flex gap-1 border-b">
-        {(["notes", "activity"] as const).map((t) => (
+      <div role="tablist" aria-label={t("history.tabsLabel")} className="flex gap-1 border-b">
+        {(["notes", "activity"] as const).map((tabName) => (
           <button
-            key={t}
+            key={tabName}
             role="tab"
-            aria-selected={tab === t}
-            onClick={() => setTab(t)}
+            aria-selected={tab === tabName}
+            onClick={() => setTab(tabName)}
             className={cn(
               "-mb-px border-b-2 px-3 py-2 text-sm font-medium transition-colors",
-              tab === t
+              tab === tabName
                 ? "border-foreground text-foreground"
                 : "border-transparent text-muted-foreground hover:text-foreground"
             )}
           >
-            {t === "notes" ? `Notes${notes ? ` (${notes.length})` : ""}` : "Activity"}
+            {tabName === "notes"
+              ? notes ? t("history.notesCount", { n: notes.length }) : t("history.notes")
+              : t("history.activity")}
           </button>
         ))}
       </div>
@@ -115,8 +127,8 @@ export function TaskHistory({
 
       {tab === "notes" ? (
         <div role="tabpanel" className="space-y-4">
-          {notes === null && !loadError && <p className="text-sm text-muted-foreground">Loading…</p>}
-          {notes?.length === 0 && <p className="text-sm text-muted-foreground">No notes yet.</p>}
+          {notes === null && !loadError && <p className="text-sm text-muted-foreground">{t("common.loading")}</p>}
+          {notes?.length === 0 && <p className="text-sm text-muted-foreground">{t("history.noNotes")}</p>}
           <ul className="space-y-3">
             {notes?.map((n) => (
               <NoteItem key={n.id} note={n} people={people} me={me} actions={actions} />
@@ -126,7 +138,7 @@ export function TaskHistory({
         </div>
       ) : (
         <div role="tabpanel">
-          {activity === null && !loadError && <p className="text-sm text-muted-foreground">Loading…</p>}
+          {activity === null && !loadError && <p className="text-sm text-muted-foreground">{t("common.loading")}</p>}
           <ol className="space-y-3">
             {activity?.map((a) => {
               const actor = people.get(a.actor_id);
@@ -134,8 +146,8 @@ export function TaskHistory({
                 <li key={a.id} className="flex gap-3 text-sm">
                   <Avatar id={a.actor_id} name={actor?.full_name ?? "?"} className="size-6 text-[10px] ring-0" />
                   <p className="min-w-0 flex-1">
-                    <span className="font-medium">{actor?.full_name ?? "Someone"}</span>{" "}
-                    {describe(a, people)}
+                    <span className="font-medium">{actor?.full_name ?? t("common.someone")}</span>{" "}
+                    {describe(a, people, t)}
                     <span className="text-muted-foreground"> · <Time iso={a.created_at} /></span>
                   </p>
                 </li>
@@ -143,7 +155,7 @@ export function TaskHistory({
             })}
           </ol>
           <p className="mt-4 text-xs text-muted-foreground">
-            The activity log is recorded automatically and can&apos;t be changed.
+            {t("history.logLocked")}
           </p>
         </div>
       )}
@@ -162,6 +174,7 @@ function NoteItem({
   me: Me;
   actions: BoardActions;
 }) {
+  const { t } = useT();
   const [editing, setEditing] = useState(false);
   const [body, setBody] = useState(note.body);
   const [busy, setBusy] = useState(false);
@@ -178,15 +191,15 @@ function NoteItem({
     >
       <div className="mb-1.5 flex flex-wrap items-center gap-2 text-xs">
         <Avatar id={note.author_id} name={author?.full_name ?? "?"} className="size-6 text-[10px] ring-0" />
-        <span className="font-medium">{author?.full_name ?? "Former user"}</span>
-        {author && !author.is_active && <span className="text-muted-foreground">(inactive)</span>}
+        <span className="font-medium">{author?.full_name ?? t("common.formerUser")}</span>
+        {author && !author.is_active && <span className="text-muted-foreground">({t("common.inactive")})</span>}
         <span className="text-muted-foreground">
           <Time iso={note.created_at} />
-          {edited && " · edited"}
+          {edited && ` · ${t("history.edited")}`}
         </span>
         {note.is_rejection && (
           <span className="ml-auto rounded-full bg-red-100 px-2 py-0.5 font-medium text-red-700 dark:bg-red-950 dark:text-red-300">
-            Rejection
+            {t("history.rejection")}
           </span>
         )}
       </div>
@@ -205,7 +218,7 @@ function NoteItem({
           <Textarea value={body} onChange={(e) => setBody(e.target.value)} rows={3} maxLength={5000} autoFocus />
           <div className="flex gap-2">
             <Button size="sm" type="submit" disabled={busy || !body.trim()}>
-              Save
+              {t("common.save")}
             </Button>
             <Button
               size="sm"
@@ -216,7 +229,7 @@ function NoteItem({
                 setBody(note.body);
               }}
             >
-              Cancel
+              {t("common.cancel")}
             </Button>
           </div>
         </form>
@@ -227,19 +240,19 @@ function NoteItem({
       {mine && !editing && (
         <div className="mt-2 flex gap-3 text-xs">
           <button className="text-muted-foreground hover:text-foreground" onClick={() => setEditing(true)}>
-            Edit
+            {t("common.edit")}
           </button>
           <button
             className="text-muted-foreground hover:text-destructive"
             disabled={busy}
             onClick={async () => {
-              if (!confirm("Delete this note?")) return;
+              if (!confirm(t("history.deleteConfirm"))) return;
               setBusy(true);
               await actions.run(() => deleteNote(note.id));
               setBusy(false);
             }}
           >
-            Delete
+            {t("common.delete")}
           </button>
         </div>
       )}
@@ -248,6 +261,7 @@ function NoteItem({
 }
 
 function NoteComposer({ taskId, actions }: { taskId: string; actions: BoardActions }) {
+  const { t } = useT();
   const [body, setBody] = useState("");
   const [busy, setBusy] = useState(false);
 
@@ -263,8 +277,8 @@ function NoteComposer({ taskId, actions }: { taskId: string; actions: BoardActio
       }}
     >
       <Textarea
-        aria-label="Add a note"
-        placeholder="Add a note…"
+        aria-label={t("history.addNoteLabel")}
+        placeholder={t("history.addNotePlaceholder")}
         value={body}
         onChange={(e) => setBody(e.target.value)}
         onKeyDown={(e) => {
@@ -275,9 +289,9 @@ function NoteComposer({ taskId, actions }: { taskId: string; actions: BoardActio
         maxLength={5000}
       />
       <div className="flex items-center justify-between">
-        <span className="text-xs text-muted-foreground">Ctrl + Enter to send</span>
+        <span className="text-xs text-muted-foreground">{t("history.ctrlEnter")}</span>
         <Button size="sm" type="submit" disabled={busy || !body.trim()}>
-          {busy ? "Adding…" : "Add note"}
+          {busy ? t("history.adding") : t("history.addNote")}
         </Button>
       </div>
     </form>

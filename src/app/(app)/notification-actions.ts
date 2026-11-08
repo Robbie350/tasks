@@ -17,7 +17,7 @@ export async function getNotifications(): Promise<AppNotification[]> {
       .limit(30)
       .returns<Row[]>();
     if (error) return [];
-    return (data ?? []).map(({ tasks, ...n }) => ({ ...n, task_title: tasks?.title ?? "A task" }));
+    return (data ?? []).map(({ tasks, ...n }) => ({ ...n, task_title: tasks?.title ?? "" }));
   } catch {
     return [];
   }

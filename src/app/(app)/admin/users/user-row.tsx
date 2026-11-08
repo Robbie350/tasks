@@ -5,10 +5,12 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
-import { ROLE_LABELS, type Profile } from "@/lib/types";
+import type { Profile } from "@/lib/types";
+import { useT } from "@/i18n/client";
 import { setUserActive, updateUser, type ActionResult } from "./actions";
 
 export function UserRow({ user, isSelf }: { user: Profile; isSelf: boolean }) {
+  const { t, tr } = useT();
   const [editing, setEditing] = useState(false);
   const [fullName, setFullName] = useState(user.full_name);
   const [role, setRole] = useState<string>(user.role);
@@ -28,17 +30,16 @@ export function UserRow({ user, isSelf }: { user: Profile; isSelf: boolean }) {
   }
 
   function toggleActive() {
-    const verb = user.is_active ? "Deactivate" : "Reactivate";
-    const detail = user.is_active
-      ? " They will be signed out and can't sign in until reactivated. Their history stays."
-      : "";
-    if (!confirm(`${verb} ${user.full_name}?${detail}`)) return;
+    const question = user.is_active
+      ? t("users.confirmDeactivate", { name: user.full_name })
+      : t("users.confirmReactivate", { name: user.full_name });
+    if (!confirm(question)) return;
     startTransition(async () => setResult(await setUserActive(user.id, !user.is_active)));
   }
 
   const message = result && (
     <p className={result.ok ? "mt-1 text-xs text-green-700 dark:text-green-400" : "mt-1 text-xs text-destructive"}>
-      {result.ok ? result.message : result.error}
+      {result.ok ? tr(result.message ?? "") : tr(result.error)}
     </p>
   );
 
@@ -47,7 +48,7 @@ export function UserRow({ user, isSelf }: { user: Profile; isSelf: boolean }) {
       <tr className="border-b bg-muted/30 last:border-0">
         <td className="px-4 py-3 align-top">
           <Input
-            aria-label="Full name"
+            aria-label={t("users.fullName")}
             value={fullName}
             onChange={(e) => setFullName(e.target.value)}
             maxLength={100}
@@ -56,8 +57,8 @@ export function UserRow({ user, isSelf }: { user: Profile; isSelf: boolean }) {
         <td className="px-4 py-3 align-top">
           <p className="py-2 text-muted-foreground">{user.email}</p>
           <Input
-            aria-label="New password"
-            placeholder="New password (optional)"
+            aria-label={t("users.newPasswordOptional")}
+            placeholder={t("users.newPasswordOptional")}
             value={newPassword}
             onChange={(e) => setNewPassword(e.target.value)}
             className="font-mono"
@@ -66,22 +67,22 @@ export function UserRow({ user, isSelf }: { user: Profile; isSelf: boolean }) {
         </td>
         <td className="px-4 py-3 align-top">
           <Select
-            aria-label="Role"
+            aria-label={t("users.role")}
             value={role}
             onChange={(e) => setRole(e.target.value)}
             disabled={isSelf}
-            title={isSelf ? "You can't change your own role" : undefined}
+            title={isSelf ? t("users.cantChangeOwnRole") : undefined}
           >
-            <option value="specialist">Specialist</option>
-            <option value="manager">Manager</option>
-            <option value="admin">Admin</option>
+            <option value="specialist">{t("roles.specialist")}</option>
+            <option value="manager">{t("roles.manager")}</option>
+            <option value="admin">{t("roles.admin")}</option>
           </Select>
         </td>
         <td className="px-4 py-3 align-top" />
         <td className="px-4 py-3 text-right align-top">
           <div className="flex justify-end gap-2">
             <Button size="sm" onClick={save} disabled={pending}>
-              {pending ? "Saving…" : "Save"}
+              {pending ? t("common.saving") : t("common.save")}
             </Button>
             <Button
               size="sm"
@@ -95,7 +96,7 @@ export function UserRow({ user, isSelf }: { user: Profile; isSelf: boolean }) {
                 setResult(null);
               }}
             >
-              Cancel
+              {t("common.cancel")}
             </Button>
           </div>
           {message}
@@ -108,15 +109,15 @@ export function UserRow({ user, isSelf }: { user: Profile; isSelf: boolean }) {
     <tr className={"border-b last:border-0 " + (user.is_active ? "" : "text-muted-foreground")}>
       <td className="px-4 py-3 font-medium">
         {user.full_name}
-        {isSelf && <span className="ml-2 text-xs font-normal text-muted-foreground">(you)</span>}
+        {isSelf && <span className="ml-2 text-xs font-normal text-muted-foreground">({t("common.you")})</span>}
       </td>
       <td className="px-4 py-3">{user.email}</td>
       <td className="px-4 py-3">
-        <Badge variant={user.role}>{ROLE_LABELS[user.role]}</Badge>
+        <Badge variant={user.role}>{t(`roles.${user.role}`)}</Badge>
       </td>
       <td className="px-4 py-3">
         <Badge variant={user.is_active ? "active" : "inactive"}>
-          {user.is_active ? "Active" : "Inactive"}
+          {user.is_active ? t("users.active") : t("users.inactive")}
         </Badge>
       </td>
       <td className="px-4 py-3 text-right">
@@ -130,7 +131,7 @@ export function UserRow({ user, isSelf }: { user: Profile; isSelf: boolean }) {
               setEditing(true);
             }}
           >
-            Edit
+            {t("common.edit")}
           </Button>
           {!isSelf && (
             <Button
@@ -140,7 +141,7 @@ export function UserRow({ user, isSelf }: { user: Profile; isSelf: boolean }) {
               disabled={pending}
               onClick={toggleActive}
             >
-              {user.is_active ? "Deactivate" : "Reactivate"}
+              {user.is_active ? t("users.deactivate") : t("users.reactivate")}
             </Button>
           )}
         </div>

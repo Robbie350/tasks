@@ -7,11 +7,13 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { ROLE_LABELS, type Person } from "@/lib/types";
+import type { Person } from "@/lib/types";
+import { useT } from "@/i18n/client";
 import { createTask, type CreateTaskResult } from "@/app/(app)/actions";
 import { Avatar } from "./avatar";
 
 export function NewTaskDialog({ people }: { people: Person[] }) {
+  const { t, tn, tr } = useT();
   const dialogRef = useRef<HTMLDialogElement>(null);
   const formRef = useRef<HTMLFormElement>(null);
   const [selected, setSelected] = useState<string[]>([]);
@@ -37,7 +39,7 @@ export function NewTaskDialog({ people }: { people: Person[] }) {
   return (
     <>
       <Button onClick={() => dialogRef.current?.showModal()}>
-        <Plus /> New task
+        <Plus /> {t("newTask.button")}
       </Button>
 
       <dialog
@@ -48,13 +50,13 @@ export function NewTaskDialog({ people }: { people: Person[] }) {
         <form ref={formRef} action={formAction} className="space-y-4 p-6">
           <div className="flex items-center justify-between">
             <h2 id="new-task-title" className="text-lg font-semibold">
-              New task
+              {t("newTask.heading")}
             </h2>
             <Button
               type="button"
               variant="ghost"
               size="icon"
-              aria-label="Close"
+              aria-label={t("common.close")}
               onClick={() => dialogRef.current?.close()}
             >
               <X />
@@ -62,40 +64,38 @@ export function NewTaskDialog({ people }: { people: Person[] }) {
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="task-title">Title</Label>
+            <Label htmlFor="task-title">{t("newTask.title")}</Label>
             <Input id="task-title" name="title" required maxLength={200} autoFocus />
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="task-description">Description</Label>
+            <Label htmlFor="task-description">{t("newTask.description")}</Label>
             <Textarea id="task-description" name="description" maxLength={5000} rows={3} />
           </div>
 
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-2">
-              <Label htmlFor="task-priority">Priority</Label>
+              <Label htmlFor="task-priority">{t("newTask.priority")}</Label>
               <Select id="task-priority" name="priority" defaultValue="medium">
-                <option value="low">Low</option>
-                <option value="medium">Medium</option>
-                <option value="high">High</option>
+                <option value="low">{t("priority.low")}</option>
+                <option value="medium">{t("priority.medium")}</option>
+                <option value="high">{t("priority.high")}</option>
               </Select>
             </div>
             <div className="space-y-2">
-              <Label htmlFor="task-due">Due date</Label>
+              <Label htmlFor="task-due">{t("newTask.dueDate")}</Label>
               <Input id="task-due" name="due_date" type="date" />
             </div>
           </div>
 
           <fieldset className="space-y-2">
             <legend className="text-sm font-medium">
-              Assignees{" "}
-              <span className="font-normal text-muted-foreground">
-                (optional, none = Unassigned)
-              </span>
+              {t("newTask.assignees")}{" "}
+              <span className="font-normal text-muted-foreground">{t("newTask.assigneesHint")}</span>
             </legend>
             <div className="max-h-48 space-y-1 overflow-y-auto rounded-md border p-2">
               {assignable.length === 0 && (
-                <p className="p-2 text-sm text-muted-foreground">No managers or specialists yet.</p>
+                <p className="p-2 text-sm text-muted-foreground">{t("newTask.noPeople")}</p>
               )}
               {assignable.map((p) => (
                 <label
@@ -113,30 +113,30 @@ export function NewTaskDialog({ people }: { people: Person[] }) {
                   <Avatar id={p.id} name={p.full_name} className="ring-0" />
                   <span className="text-sm">{p.full_name}</span>
                   <span className="ml-auto text-xs text-muted-foreground">
-                    {ROLE_LABELS[p.role]}
+                    {t(`roles.${p.role}`)}
                   </span>
                 </label>
               ))}
             </div>
             <p className="text-xs text-muted-foreground">
               {selected.length > 0
-                ? `Starts in To Do with ${selected.length} ${selected.length === 1 ? "person" : "people"}.`
-                : "Starts in Unassigned, where anyone can grab it."}
+                ? tn("newTask.startsTodo", selected.length)
+                : t("newTask.startsUnassigned")}
             </p>
           </fieldset>
 
           {state && !state.ok && (
             <p role="alert" className="rounded-md bg-destructive/10 px-3 py-2 text-sm text-destructive">
-              {state.error}
+              {tr(state.error)}
             </p>
           )}
 
           <div className="flex justify-end gap-2">
             <Button type="button" variant="ghost" onClick={() => dialogRef.current?.close()}>
-              Cancel
+              {t("common.cancel")}
             </Button>
             <Button type="submit" disabled={pending}>
-              {pending ? "Creating…" : "Create task"}
+              {pending ? t("newTask.creating") : t("newTask.create")}
             </Button>
           </div>
         </form>

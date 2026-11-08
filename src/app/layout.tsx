@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import { cookies } from "next/headers";
 import { PREF_COOKIES, THEME_BOOT_SCRIPT, normalizePreferences } from "@/lib/preferences";
+import { I18nProvider } from "@/i18n/client";
+import { loadMessages } from "@/i18n";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -20,6 +22,8 @@ export default async function RootLayout({
     locale: jar.get(PREF_COOKIES.locale)?.value,
   });
 
+  const messages = await loadMessages(prefs.locale);
+
   return (
     <html
       lang={prefs.locale}
@@ -32,7 +36,11 @@ export default async function RootLayout({
       <head>
         <script dangerouslySetInnerHTML={{ __html: THEME_BOOT_SCRIPT }} />
       </head>
-      <body className="antialiased">{children}</body>
+      <body className="antialiased">
+        <I18nProvider locale={prefs.locale} messages={messages}>
+          {children}
+        </I18nProvider>
+      </body>
     </html>
   );
 }

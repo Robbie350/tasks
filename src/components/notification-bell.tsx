@@ -8,11 +8,13 @@ import { timeAgo } from "@/lib/time";
 import type { AppNotification } from "@/lib/types";
 import { getNotifications, markNotificationsRead } from "@/app/(app)/notification-actions";
 import { NOTIFICATIONS_CHANGED } from "@/components/realtime-refresher";
+import { useT } from "@/i18n/client";
 
 /** Fired to ask the board to open a task's panel. */
 export const OPEN_TASK = "open-task";
 
 export function NotificationBell() {
+  const { t, locale } = useT();
   const [items, setItems] = useState<AppNotification[]>([]);
   const [open, setOpen] = useState(false);
   const wrapRef = useRef<HTMLDivElement>(null);
@@ -61,7 +63,7 @@ export function NotificationBell() {
       <Button
         variant="ghost"
         size="icon"
-        aria-label={unread ? `Notifications, ${unread} unread` : "Notifications"}
+        aria-label={unread ? t("bell.labelUnread", { n: unread }) : t("bell.label")}
         aria-expanded={open}
         onClick={() => setOpen((o) => !o)}
         className="relative"
@@ -77,16 +79,16 @@ export function NotificationBell() {
       {open && (
         <div className="absolute right-0 z-40 mt-2 w-80 max-w-[calc(100vw-2rem)] overflow-hidden rounded-xl border bg-popover text-popover-foreground shadow-lg">
           <div className="flex items-center justify-between border-b px-4 py-2.5">
-            <span className="text-sm font-semibold">Notifications</span>
+            <span className="text-sm font-semibold">{t("bell.label")}</span>
             {unread > 0 && (
               <button className="text-xs text-muted-foreground hover:text-foreground" onClick={markAll}>
-                Mark all as read
+                {t("bell.markAll")}
               </button>
             )}
           </div>
           {items.length === 0 ? (
             <p className="px-4 py-8 text-center text-sm text-muted-foreground">
-              You&apos;re all caught up.
+              {t("bell.empty")}
             </p>
           ) : (
             <ul className="max-h-96 overflow-y-auto">
@@ -110,12 +112,12 @@ export function NotificationBell() {
                     </span>
                     <span className="min-w-0 flex-1">
                       <span className="block">
-                        {n.type === "rejected" ? "Your task was rejected" : "You were assigned"}
+                        {n.type === "rejected" ? t("bell.rejected") : t("bell.assigned")}
                       </span>
-                      <span className="block truncate font-medium">{n.task_title}</span>
-                      <span className="block text-xs text-muted-foreground">{timeAgo(n.created_at)}</span>
+                      <span className="block truncate font-medium">{n.task_title || t("bell.fallbackTitle")}</span>
+                      <span className="block text-xs text-muted-foreground">{timeAgo(n.created_at, locale, t("history.justNow"))}</span>
                     </span>
-                    {!n.is_read && <span className="mt-2 size-2 shrink-0 rounded-full bg-sky-500" aria-label="Unread" />}
+                    {!n.is_read && <span className="mt-2 size-2 shrink-0 rounded-full bg-sky-500" aria-label={t("bell.unread")} />}
                   </button>
                 </li>
               ))}

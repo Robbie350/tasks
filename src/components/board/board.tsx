@@ -26,6 +26,7 @@ import {
 import { markNotificationsRead } from "@/app/(app)/notification-actions";
 import { OPEN_TASK } from "@/components/notification-bell";
 import { Select } from "@/components/ui/select";
+import { useT } from "@/i18n/client";
 import { TaskCard } from "./task-card";
 import { TaskPanel } from "./task-panel";
 
@@ -74,6 +75,7 @@ export function Board({
   unreadTaskIds?: string[];
   toolbarEnd?: React.ReactNode;
 }) {
+  const { t, tr } = useT();
   const peopleById = useMemo(() => new Map(people.map((p) => [p.id, p])), [people]);
   const unread = useMemo(() => new Set(unreadTaskIds), [unreadTaskIds]);
   const isWorker = me.role !== "admin";
@@ -190,7 +192,7 @@ export function Board({
   return (
     <>
       <div className="mb-4 flex flex-wrap items-center gap-3">
-        <h1 className="mr-2 text-xl font-semibold tracking-tight">Board</h1>
+        <h1 className="mr-2 text-xl font-semibold tracking-tight">{t("board.title")}</h1>
         {isWorker && (
           <Button
             variant={filter === me.id ? "default" : "outline"}
@@ -198,20 +200,20 @@ export function Board({
             aria-pressed={filter === me.id}
             onClick={() => changeFilter(filter === me.id ? "" : me.id)}
           >
-            My tasks
+            {t("board.myTasks")}
           </Button>
         )}
         <Select
-          aria-label="Filter by person"
+          aria-label={t("board.filterByPerson")}
           className="h-8 w-auto min-w-40"
           value={filter && filter !== me.id ? filter : ""}
           onChange={(e) => changeFilter(e.target.value)}
         >
-          <option value="">Everyone</option>
+          <option value="">{t("common.everyone")}</option>
           {filterPeople.map((p) => (
             <option key={p.id} value={p.id}>
               {p.full_name}
-              {p.id === me.id ? " (you)" : ""}
+              {p.id === me.id ? ` (${t("common.you")})` : ""}
             </option>
           ))}
         </Select>
@@ -220,7 +222,7 @@ export function Board({
             className="text-xs text-muted-foreground underline-offset-4 hover:underline"
             onClick={() => changeFilter("")}
           >
-            Clear filter
+            {t("common.clearFilter")}
           </button>
         )}
         <div className="ml-auto">{toolbarEnd}</div>
@@ -237,7 +239,7 @@ export function Board({
             <Column
               key={col.status}
               status={col.status}
-              label={col.label}
+              label={t(`status.${col.status}`)}
               tasks={optimisticTasks
                 .filter((t) => t.status === col.status && visible(t))
                 .sort((a, b) => a.position - b.position)}
@@ -288,7 +290,7 @@ export function Board({
           role="alert"
           className="fixed inset-x-4 bottom-4 z-50 mx-auto max-w-md rounded-lg bg-destructive px-4 py-3 text-sm text-white shadow-lg"
         >
-          {error}
+          {tr(error)}
         </div>
       )}
     </>
@@ -308,6 +310,7 @@ function Column({
   state: "idle" | "allowed" | "blocked";
   render: (task: Task) => React.ReactNode;
 }) {
+  const { t } = useT();
   const { setNodeRef, isOver } = useDroppable({ id: status, disabled: state === "blocked" });
   const isPool = status === "unassigned";
 
@@ -335,7 +338,7 @@ function Column({
         {tasks.map(render)}
         {tasks.length === 0 && (
           <p className="px-1 py-6 text-center text-xs text-muted-foreground">
-            {isPool ? "No tasks waiting to be grabbed" : "Nothing here"}
+            {isPool ? t("board.emptyPool") : t("board.emptyColumn")}
           </p>
         )}
       </div>

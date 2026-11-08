@@ -13,11 +13,6 @@ export type Profile = {
   locale: import("@/lib/preferences").Locale;
 };
 
-export const ROLE_LABELS: Record<Role, string> = {
-  admin: "Admin",
-  manager: "Manager",
-  specialist: "Specialist",
-};
 
 export type TaskStatus = "unassigned" | "todo" | "in_progress" | "review" | "done";
 export type TaskPriority = "low" | "medium" | "high";
@@ -71,19 +66,15 @@ export type Activity = {
 /** Minimal person info the board needs for names and avatars. */
 export type Person = Pick<Profile, "id" | "full_name" | "role" | "is_active">;
 
-export const COLUMNS: { status: TaskStatus; label: string }[] = [
-  { status: "unassigned", label: "Unassigned" },
-  { status: "todo", label: "To Do" },
-  { status: "in_progress", label: "In Progress" },
-  { status: "review", label: "Review" },
-  { status: "done", label: "Done" },
+/** Board columns, left to right. Labels come from the dictionary: status.<status>. */
+export const COLUMNS: { status: TaskStatus }[] = [
+  { status: "unassigned" },
+  { status: "todo" },
+  { status: "in_progress" },
+  { status: "review" },
+  { status: "done" },
 ];
 
-export const PRIORITY_LABELS: Record<TaskPriority, string> = {
-  low: "Low",
-  medium: "Medium",
-  high: "High",
-};
 
 export type AppNotification = {
   id: string;

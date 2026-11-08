@@ -4,7 +4,8 @@ import { useDraggable } from "@dnd-kit/core";
 import { MessageSquare } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { PRIORITY_LABELS, type Person, type Task } from "@/lib/types";
+import type { Person, Task } from "@/lib/types";
+import { useT } from "@/i18n/client";
 import { canGrab, type Me } from "@/lib/rules";
 import { AvatarStack } from "./avatar";
 import { DueDate } from "./due-date";
@@ -34,6 +35,7 @@ export function TaskCard({
   onOpen?: () => void;
   onGrab?: () => void;
 }) {
+  const { t, tn } = useT();
   const { setNodeRef, listeners, isDragging } = useDraggable({
     id: task.id,
     disabled: !draggable || overlay,
@@ -60,9 +62,9 @@ export function TaskCard({
       {isNew && (
         <span
           className="absolute top-2 right-2 size-2.5 rounded-full bg-sky-500 ring-2 ring-card"
-          title="New for you"
+          title={t("board.newForYou")}
         >
-          <span className="sr-only">New for you</span>
+          <span className="sr-only">{t("board.newForYou")}</span>
         </span>
       )}
       {/* The title is a real button so keyboard users can open the task. */}
@@ -76,7 +78,7 @@ export function TaskCard({
       >
         {task.title}
       </button>
-      <span className="sr-only">Priority: {PRIORITY_LABELS[task.priority]}</span>
+      <span className="sr-only">{t("priority.label", { priority: t(`priority.${task.priority}`) })}</span>
 
       {(assignees.length > 0 || task.due_date || task.notes_count > 0) && (
         <div className="mt-3 flex items-center justify-between gap-2">
@@ -85,11 +87,11 @@ export function TaskCard({
             {task.notes_count > 0 && (
               <span
                 className="inline-flex items-center gap-1 text-xs text-muted-foreground"
-                title={`${task.notes_count} ${task.notes_count === 1 ? "note" : "notes"}`}
+                title={tn("board.notes", task.notes_count)}
               >
                 <MessageSquare className="size-3.5" aria-hidden />
-                {task.notes_count}
-                <span className="sr-only">notes</span>
+                <span aria-hidden>{task.notes_count}</span>
+                <span className="sr-only">{tn("board.notes", task.notes_count)}</span>
               </span>
             )}
             {task.due_date && <DueDate date={task.due_date} done={task.status === "done"} />}
@@ -108,7 +110,7 @@ export function TaskCard({
             onGrab();
           }}
         >
-          Grab
+          {t("board.grab")}
         </Button>
       )}
     </article>

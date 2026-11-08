@@ -8,14 +8,8 @@ import { Label } from "@/components/ui/label";
 import { Select } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
-import {
-  COLUMNS,
-  PRIORITY_LABELS,
-  ROLE_LABELS,
-  type Person,
-  type Task,
-  type TaskPriority,
-} from "@/lib/types";
+import type { Person, Task, TaskPriority } from "@/lib/types";
+import { useT } from "@/i18n/client";
 import {
   canEdit,
   canGrab,
@@ -32,7 +26,6 @@ import { Avatar } from "./avatar";
 import { DueDate } from "./due-date";
 import { TaskHistory } from "./task-history";
 
-const STATUS_LABEL = Object.fromEntries(COLUMNS.map((c) => [c.status, c.label]));
 
 const PRIORITY_DOT = {
   low: "bg-zinc-300",
@@ -105,6 +98,7 @@ function PanelBody({
   startInRejectMode: boolean;
   close: () => void;
 }) {
+  const { t, locale } = useT();
   const [mode, setMode] = useState<"view" | "edit" | "reject">(
     startInRejectMode && canReview(task, me) ? "reject" : "view"
   );
@@ -121,17 +115,17 @@ function PanelBody({
         <div className="min-w-0 space-y-2">
           <div className="flex flex-wrap items-center gap-2 text-xs">
             <span className="rounded-full bg-muted px-2 py-0.5 font-medium">
-              {STATUS_LABEL[task.status]}
+              {t(`status.${task.status}`)}
             </span>
             <span className="inline-flex items-center gap-1.5 text-muted-foreground">
               <span className={cn("size-2 rounded-full", PRIORITY_DOT[task.priority])} />
-              {PRIORITY_LABELS[task.priority]} priority
+              {t("priority.label", { priority: t(`priority.${task.priority}`) })}
             </span>
             {task.due_date && <DueDate date={task.due_date} done={task.status === "done"} />}
           </div>
           <h2 className="text-lg leading-snug font-semibold break-words">{task.title}</h2>
         </div>
-        <Button variant="ghost" size="icon" aria-label="Close" onClick={close}>
+        <Button variant="ghost" size="icon" aria-label={t("common.close")} onClick={close}>
           <X />
         </Button>
       </header>
@@ -144,22 +138,22 @@ function PanelBody({
             {task.description ? (
               <p className="text-sm whitespace-pre-wrap">{task.description}</p>
             ) : (
-              <p className="text-sm text-muted-foreground italic">No description.</p>
+              <p className="text-sm text-muted-foreground italic">{t("panel.noDescription")}</p>
             )}
 
             {/* People */}
             <section className="space-y-3">
               <div className="flex items-center justify-between">
-                <h3 className="text-sm font-semibold">On this task</h3>
+                <h3 className="text-sm font-semibold">{t("panel.onThisTask")}</h3>
                 <div className="flex gap-2">
                   {canGrab(task, me) && (
                     <Button size="sm" onClick={() => actions.grab(task)}>
-                      Grab
+                      {t("board.grab")}
                     </Button>
                   )}
                   {canJoin(task, me) && (
                     <Button size="sm" variant="outline" onClick={() => actions.join(task)}>
-                      Join
+                      {t("panel.join")}
                     </Button>
                   )}
                   {canLeave(task, me) && (
@@ -168,21 +162,21 @@ function PanelBody({
                       variant="ghost"
                       onClick={() => {
                         const last = task.assignee_ids.length === 1;
-                        const where =
+                        const question =
                           task.status === "todo"
-                            ? "It will go back to Unassigned."
-                            : `It will stay in ${STATUS_LABEL[task.status]} with nobody on it.`;
-                        if (!last || confirm(`You're the last person on this task. ${where} Leave?`))
+                            ? t("panel.leaveLastTodo")
+                            : t("panel.leaveLastStay", { column: t(`status.${task.status}`) });
+                        if (!last || confirm(question))
                           actions.leave(task);
                       }}
                     >
-                      Leave
+                      {t("panel.leave")}
                     </Button>
                   )}
                 </div>
               </div>
               {assignees.length === 0 ? (
-                <p className="text-sm text-muted-foreground">Nobody yet.</p>
+                <p className="text-sm text-muted-foreground">{t("common.nobodyYet")}</p>
               ) : (
                 <ul className="space-y-2">
                   {assignees.map((p) => (
@@ -190,10 +184,10 @@ function PanelBody({
                       <Avatar id={p.id} name={p.full_name} className="ring-0" />
                       <span>
                         {p.full_name}
-                        {p.id === me.id && <span className="text-muted-foreground"> (you)</span>}
+                        {p.id === me.id && <span className="text-muted-foreground"> ({t("common.you")})</span>}
                       </span>
                       <span className="ml-auto text-xs text-muted-foreground">
-                        {ROLE_LABELS[p.role]}
+                        {t(`roles.${p.role}`)}
                       </span>
                     </li>
                   ))}
@@ -206,17 +200,17 @@ function PanelBody({
               <section className="space-y-3 rounded-lg border p-4">
                 {next && (
                   <Button className="w-full" onClick={() => actions.move(task, next)}>
-                    {next === "in_progress" ? "Start work → In Progress" : "Submit for review → Review"}
+                    {next === "in_progress" ? t("panel.start") : t("panel.submit")}
                   </Button>
                 )}
 
                 {canReview(task, me) && mode === "view" && (
                   <div className="flex gap-2">
                     <Button className="flex-1" onClick={() => actions.approve(task)}>
-                      Approve → Done
+                      {t("panel.approve")}
                     </Button>
                     <Button variant="outline" className="flex-1" onClick={() => setMode("reject")}>
-                      Reject
+                      {t("panel.reject")}
                     </Button>
                   </div>
                 )}
@@ -227,17 +221,17 @@ function PanelBody({
 
                 {task.status === "review" && me.role === "manager" && onTask && (
                   <p className="text-xs text-muted-foreground">
-                    You&apos;re on this task, so another manager has to approve or reject it.
+                    {t("panel.reviewerOnTask")}
                   </p>
                 )}
               </section>
             )}
 
             <dl className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-1 text-xs text-muted-foreground">
-              <dt>Created by</dt>
-              <dd>{creator?.full_name ?? "Unknown"}</dd>
-              <dt>Created</dt>
-              <dd>{new Date(task.created_at).toLocaleDateString()}</dd>
+              <dt>{t("panel.createdBy")}</dt>
+              <dd>{creator?.full_name ?? t("common.unknown")}</dd>
+              <dt>{t("panel.created")}</dt>
+              <dd>{new Date(task.created_at).toLocaleDateString(locale)}</dd>
             </dl>
 
             <TaskHistory task={task} people={people} me={me} actions={actions} />
@@ -248,7 +242,7 @@ function PanelBody({
       {canEdit(me) && mode === "view" && (
         <footer className="border-t p-4">
           <Button variant="outline" className="w-full" onClick={() => setMode("edit")}>
-            Edit task
+            {t("panel.editTask")}
           </Button>
         </footer>
       )}
@@ -265,6 +259,7 @@ function RejectForm({
   actions: BoardActions;
   cancel: () => void;
 }) {
+  const { t } = useT();
   const [note, setNote] = useState("");
   const [busy, setBusy] = useState(false);
 
@@ -279,7 +274,7 @@ function RejectForm({
         if (ok) cancel();
       }}
     >
-      <Label htmlFor="reject-note">What needs to change? (required)</Label>
+      <Label htmlFor="reject-note">{t("panel.rejectLabel")}</Label>
       <Textarea
         id="reject-note"
         value={note}
@@ -288,14 +283,14 @@ function RejectForm({
         autoFocus
         rows={4}
         maxLength={5000}
-        placeholder="The people on this task will see this note and get a notification."
+        placeholder={t("panel.rejectPlaceholder")}
       />
       <div className="flex gap-2">
         <Button type="submit" variant="destructive" disabled={busy || !note.trim()}>
-          {busy ? "Sending back…" : "Reject → In Progress"}
+          {busy ? t("panel.rejectSending") : t("panel.rejectSubmit")}
         </Button>
         <Button type="button" variant="ghost" onClick={cancel} disabled={busy}>
-          Cancel
+          {t("common.cancel")}
         </Button>
       </div>
     </form>
@@ -311,6 +306,7 @@ function EditForm({
   actions: BoardActions;
   done: () => void;
 }) {
+  const { t } = useT();
   const [title, setTitle] = useState(task.title);
   const [description, setDescription] = useState(task.description ?? "");
   const [priority, setPriority] = useState<TaskPriority>(task.priority);
@@ -331,7 +327,7 @@ function EditForm({
       }}
     >
       <div className="space-y-2">
-        <Label htmlFor="edit-title">Title</Label>
+        <Label htmlFor="edit-title">{t("newTask.title")}</Label>
         <Input
           id="edit-title"
           value={title}
@@ -341,7 +337,7 @@ function EditForm({
         />
       </div>
       <div className="space-y-2">
-        <Label htmlFor="edit-description">Description</Label>
+        <Label htmlFor="edit-description">{t("newTask.description")}</Label>
         <Textarea
           id="edit-description"
           value={description}
@@ -352,28 +348,28 @@ function EditForm({
       </div>
       <div className="grid grid-cols-2 gap-4">
         <div className="space-y-2">
-          <Label htmlFor="edit-priority">Priority</Label>
+          <Label htmlFor="edit-priority">{t("newTask.priority")}</Label>
           <Select
             id="edit-priority"
             value={priority}
             onChange={(e) => setPriority(e.target.value as TaskPriority)}
           >
-            <option value="low">Low</option>
-            <option value="medium">Medium</option>
-            <option value="high">High</option>
+            <option value="low">{t("priority.low")}</option>
+            <option value="medium">{t("priority.medium")}</option>
+            <option value="high">{t("priority.high")}</option>
           </Select>
         </div>
         <div className="space-y-2">
-          <Label htmlFor="edit-due">Due date</Label>
+          <Label htmlFor="edit-due">{t("newTask.dueDate")}</Label>
           <Input id="edit-due" type="date" value={dueDate} onChange={(e) => setDueDate(e.target.value)} />
         </div>
       </div>
       <div className="flex gap-2">
         <Button type="submit" disabled={busy}>
-          {busy ? "Saving…" : "Save changes"}
+          {busy ? t("common.saving") : t("panel.saveChanges")}
         </Button>
         <Button type="button" variant="ghost" onClick={done} disabled={busy}>
-          Cancel
+          {t("common.cancel")}
         </Button>
       </div>
     </form>

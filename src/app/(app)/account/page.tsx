@@ -1,31 +1,39 @@
 import type { Metadata } from "next";
 import { requireProfile } from "@/lib/auth";
-import { ROLE_LABELS } from "@/lib/types";
-import { AppearanceForm, NameForm, PasswordForm } from "./forms";
+import { getI18n } from "@/i18n/server";
+import { AppearanceForm, LanguageForm, NameForm, PasswordForm } from "./forms";
 
-export const metadata: Metadata = { title: "My account · Team Task Board" };
+export async function generateMetadata(): Promise<Metadata> {
+  const { t } = await getI18n();
+  return { title: `${t("account.title")} · ${t("common.appName")}` };
+}
 
 export default async function AccountPage() {
   const me = await requireProfile();
+  const { t } = await getI18n();
 
   return (
     <main className="mx-auto max-w-2xl space-y-6 p-4 sm:p-6">
       <div>
-        <h1 className="text-2xl font-semibold tracking-tight">My account</h1>
+        <h1 className="text-2xl font-semibold tracking-tight">{t("account.title")}</h1>
         <p className="text-sm text-muted-foreground">
-          {me.email} · {ROLE_LABELS[me.role]}
+          {me.email} · {t(`roles.${me.role}`)}
         </p>
       </div>
 
-      <Section title="Name" description="Shown on cards, notes and the activity log.">
+      <Section title={t("account.nameTitle")} description={t("account.nameDesc")}>
         <NameForm fullName={me.full_name} />
       </Section>
 
-      <Section title="Appearance" description="Only affects you. Saved to your account.">
+      <Section title={t("account.languageTitle")} description={t("account.languageDesc")}>
+        <LanguageForm locale={me.locale} />
+      </Section>
+
+      <Section title={t("account.appearanceTitle")} description={t("account.appearanceDesc")}>
         <AppearanceForm theme={me.theme} accent={me.accent} />
       </Section>
 
-      <Section title="Password" description="At least 8 characters.">
+      <Section title={t("account.passwordTitle")} description={t("account.passwordDesc")}>
         <PasswordForm />
       </Section>
     </main>

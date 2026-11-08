@@ -3,8 +3,9 @@
 import { useEffect, useState } from "react";
 import { CalendarDays } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { formatDay } from "@/lib/time";
+import { useT } from "@/i18n/client";
 
-const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 
 function localToday() {
   const d = new Date();
@@ -18,9 +19,9 @@ export function DueDate({ date, done }: { date: string; done: boolean }) {
   const [today, setToday] = useState<string | null>(null);
   useEffect(() => setToday(localToday()), []);
 
-  const [y, m, d] = date.split("-").map(Number);
+  const { t } = useT();
   const overdue = !done && today !== null && date < today;
-  const label = `${d} ${MONTHS[m - 1]}${y !== new Date().getFullYear() ? ` ${y}` : ""}`;
+  const label = formatDay(date, t("dates.monthsShort"));
 
   return (
     <span
@@ -28,11 +29,11 @@ export function DueDate({ date, done }: { date: string; done: boolean }) {
         "inline-flex items-center gap-1 text-xs",
         overdue ? "font-medium text-red-600 dark:text-red-400" : "text-muted-foreground"
       )}
-      title={overdue ? "Overdue" : "Due date"}
+      title={overdue ? t("board.overdue") : t("board.dueDate")}
     >
       <CalendarDays className="size-3.5" aria-hidden />
       {label}
-      {overdue && <span className="sr-only">(overdue)</span>}
+      {overdue && <span className="sr-only">({t("board.overdue")})</span>}
     </span>
   );
 }
