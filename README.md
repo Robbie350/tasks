@@ -1,7 +1,8 @@
 # Team Task Board
 
 Internal kanban board: Next.js (App Router) + TypeScript, Tailwind + shadcn/ui,
-dnd-kit, Supabase (auth, Postgres, RLS, realtime). Hosted on Vercel.
+dnd-kit, Supabase (auth, Postgres, RLS, realtime). Self-hosted on an Oracle
+Cloud VPS with Docker + Caddy; Supabase stays on Supabase cloud.
 
 ## Local setup
 
@@ -13,6 +14,10 @@ npm run dev                  # http://localhost:3000
 
 The home page shows a Supabase status badge: **Connected** means the URL and key work.
 
+## Deploying
+
+See [deploy/DEPLOY.md](deploy/DEPLOY.md): DNS, Oracle firewall, Docker, HTTPS, nightly backups.
+
 ## Project layout
 
 - `src/app/` – routes (App Router)
@@ -20,6 +25,7 @@ The home page shows a Supabase status badge: **Connected** means the URL and key
 - `src/lib/supabase/client.ts` – browser client (Client Components)
 - `src/lib/supabase/server.ts` – server client (Server Components / Actions), `server-only`
 - `src/lib/supabase/env.ts` – public env vars only
+- `Dockerfile`, `docker-compose.yml`, `deploy/` – VPS deployment (app + Caddy + backups)
 
 ## Security rules
 
