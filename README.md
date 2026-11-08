@@ -1,36 +1,38 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Team Task Board
 
-## Getting Started
+Internal kanban board: Next.js (App Router) + TypeScript, Tailwind + shadcn/ui,
+dnd-kit, Supabase (auth, Postgres, RLS, realtime). Hosted on Vercel.
 
-First, run the development server:
+## Local setup
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+npm install
+cp .env.example .env.local   # fill in Supabase URL + anon key
+npm run dev                  # http://localhost:3000
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+The home page shows a Supabase status badge: **Connected** means the URL and key work.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Project layout
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+- `src/app/` – routes (App Router)
+- `src/components/ui/` – shadcn/ui components (add more with `npx shadcn@latest add <name>`)
+- `src/lib/supabase/client.ts` – browser client (Client Components)
+- `src/lib/supabase/server.ts` – server client (Server Components / Actions), `server-only`
+- `src/lib/supabase/env.ts` – public env vars only
 
-## Learn More
+## Security rules
 
-To learn more about Next.js, take a look at the following resources:
+- The `SUPABASE_SERVICE_ROLE_KEY` is server-only and must never be prefixed with `NEXT_PUBLIC_`.
+- Public sign-up stays disabled in Supabase (Authentication → Sign In / Providers → Email → turn off "Allow new users to sign up").
+- All permissions are enforced by RLS or server functions, never only in the UI.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Build progress
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+1. [x] Project setup
+2. [ ] Auth and roles
+3. [ ] Admin screen
+4. [ ] Board (read-only) + create task
+5. [ ] Task flow (grab / join / leave / move / approve / reject)
+6. [ ] Task detail panel (notes + activity)
+7. [ ] Polish (realtime, filters, overdue, notifications)
