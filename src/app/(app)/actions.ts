@@ -28,16 +28,20 @@ export async function createTask(
   if (dueDate && !/^\d{4}-\d{2}-\d{2}$/.test(dueDate))
     return { ok: false, error: "That due date isn't valid." };
 
-  const supabase = await createClient();
-  const { error } = await supabase.rpc("create_task", {
-    p_title: title,
-    p_description: description || null,
-    p_priority: priority,
-    p_due_date: dueDate || null,
-    p_assignee_ids: assigneeIds,
-  });
-
-  if (error) return { ok: false, error: error.message };
+  try {
+    const supabase = await createClient();
+    const { error } = await supabase.rpc("create_task", {
+      p_title: title,
+      p_description: description || null,
+      p_priority: priority,
+      p_due_date: dueDate || null,
+      p_assignee_ids: assigneeIds,
+    });
+    if (error) return { ok: false, error: error.message };
+  } catch (e) {
+    console.error("create_task failed", e);
+    return { ok: false, error: "Couldn't reach the server. Check your connection and try again." };
+  }
 
   revalidatePath("/");
   return { ok: true };

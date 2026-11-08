@@ -13,7 +13,7 @@ export default async function BoardPage() {
         <h1 className="text-xl font-semibold tracking-tight">Board</h1>
         {profile.role === "manager" && <NewTaskDialog people={people} />}
       </div>
-      <Board tasks={tasks} people={people} />
+      <Board tasks={tasks} people={people} me={{ id: profile.id, role: profile.role }} />
     </main>
   );
 }

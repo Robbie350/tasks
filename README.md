@@ -32,6 +32,9 @@ See [deploy/DEPLOY.md](deploy/DEPLOY.md): DNS, Coolify app setup, environment va
 - `src/lib/auth.ts` – `requireProfile()` / `requireRole()` for pages and server actions
 - `src/lib/supabase/admin.ts` – secret-key client, server-only; used after an admin check
 - `src/app/(app)/admin/users/` – user management (admin only)
+- `src/lib/rules.ts` – which buttons / drop targets the UI offers (the database enforces the same rules)
+- `src/app/(app)/task-actions.ts` – server actions that call the task database functions
+- `src/components/board/` – board, cards, drag and drop, task panel
 
 ## Task flow rules (agreed)
 
@@ -62,6 +65,6 @@ Admins manage users only: they can't create, be assigned to, move or approve tas
 2. [x] Auth and roles
 3. [x] Admin screen
 4. [x] Board (read-only) + create task
-5. [ ] Task flow (grab / join / leave / move / approve / reject)
+5. [x] Task flow (grab / join / leave / move / approve / reject)
 6. [ ] Task detail panel (notes + activity)
 7. [ ] Polish (realtime, filters, overdue, notifications)

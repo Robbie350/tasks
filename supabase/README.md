@@ -9,6 +9,7 @@ Each script is safe to run again.
 | `0001_profiles.sql` | 2 | `profiles` table, roles, auto-profile trigger, security rules |
 | `0002_admin_access.sql` | 3 | lets the server's secret key manage profiles (admin screen) |
 | `0003_tasks.sql` | 4 | `tasks`, `task_assignees`, `task_activity`, `create_task()` |
+| `0004_task_flow.sql` | 5 | `task_notes`, `notifications`, grab / join / leave / move / approve / reject / update functions |
 
 ## Creating the first admin (once)
 
