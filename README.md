@@ -27,6 +27,9 @@ See [deploy/DEPLOY.md](deploy/DEPLOY.md): DNS, Coolify app setup, environment va
 - `src/lib/supabase/env.ts` – public env vars only
 - `Dockerfile` – production image (Coolify builds this)
 - `deploy/` – deployment guide and backup script
+- `supabase/` – database scripts and first-admin setup ([supabase/README.md](supabase/README.md))
+- `src/middleware.ts` – refreshes the session, sends signed-out visitors to `/login`
+- `src/lib/auth.ts` – `requireProfile()` / `requireRole()` for pages and server actions
 
 ## Security rules
 
@@ -37,7 +40,7 @@ See [deploy/DEPLOY.md](deploy/DEPLOY.md): DNS, Coolify app setup, environment va
 ## Build progress
 
 1. [x] Project setup
-2. [ ] Auth and roles
+2. [x] Auth and roles
 3. [ ] Admin screen
 4. [ ] Board (read-only) + create task
 5. [ ] Task flow (grab / join / leave / move / approve / reject)

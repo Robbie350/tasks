@@ -43,6 +43,9 @@ On the app's **Configuration → General** page:
 
 - **Domains:** `https://tasks.yourdomain.com` (include `https://` so Coolify gets a certificate).
 
+On **Configuration → Healthcheck**: enable it, **Path** `/api/health`, **Port** `3000`.
+(Not `/`: that page redirects signed-out visitors to the login page.)
+
 ## 3. Environment variables
 
 App → **Environment Variables**. Add:
