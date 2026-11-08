@@ -36,6 +36,7 @@ See [deploy/DEPLOY.md](deploy/DEPLOY.md): DNS, Coolify app setup, environment va
 - `src/lib/rules.ts` – which buttons / drop targets the UI offers (the database enforces the same rules)
 - `src/app/(app)/task-actions.ts` – server actions that call the task database functions
 - `src/components/board/` – board, cards, drag and drop, task panel
+- `src/components/personal/` – personal board (private per user; the browser writes directly, RLS limits everyone to their own rows)
 - `src/components/realtime-refresher.tsx` – live updates (Supabase Realtime → refresh)
 - `src/components/notification-bell.tsx` – in-app notifications
 
@@ -76,7 +77,7 @@ Admins manage users only: they can't create, be assigned to, move or approve tas
 
 - [x] A: My account (name, password) and themes (light / dark / system, accent colour)
 - [x] B: Languages (English, Russian, Uzbek)
-- [ ] C: Personal board
+- [x] C: Personal board
 - [ ] D: Phone layout, archive Done, search and labels
 - [ ] E: Checklists and attachments on team tasks
 - [ ] F: Reports

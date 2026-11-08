@@ -84,3 +84,27 @@ export type AppNotification = {
   created_at: string;
   task_title: string;
 };
+
+// ---------------------------------------------------------------------------
+// Personal board
+// ---------------------------------------------------------------------------
+export type PColumn = { id: string; title: string; color: string; position: number };
+export type PLabel = { id: string; name: string; color: string };
+export type PCheckItem = { id: string; text: string; done: boolean };
+export type PCard = {
+  id: string;
+  column_id: string;
+  title: string;
+  notes: string | null;
+  due_date: string | null;
+  priority: TaskPriority | null;
+  label_ids: string[];
+  checklist: PCheckItem[];
+  position: number;
+};
+export type PersonalBoardData = {
+  columns: PColumn[];
+  cards: PCard[];
+  labels: PLabel[];
+  background: string;
+};

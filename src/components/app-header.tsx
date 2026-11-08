@@ -16,6 +16,7 @@ export async function AppHeader({ profile }: { profile: Profile }) {
         </Link>
         <nav className="flex items-center gap-1 text-sm">
           <NavLink href="/">{t("nav.board")}</NavLink>
+          <NavLink href="/me">{t("nav.myBoard")}</NavLink>
           {profile.role === "admin" && <NavLink href="/admin/users">{t("nav.users")}</NavLink>}
         </nav>
       </div>
