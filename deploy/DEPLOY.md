@@ -1,8 +1,12 @@
-# Deploying to the Oracle VPS
+# Deploying with Coolify
 
-Target: Ubuntu on Oracle Cloud free tier (Ampere A1, ARM64).
-Result: the app at `https://tasks.yourdomain.com`, HTTPS handled by Caddy.
-Supabase stays on Supabase cloud.
+Target: the Oracle Cloud VPS (Ubuntu, ARM64) that already runs Coolify.
+Result: the app at `https://tasks.yourdomain.com`.
+
+- **Coolify** builds the `Dockerfile` from GitHub, runs the container, and its proxy
+  (`coolify-proxy`) handles the domain and HTTPS certificate. Nothing extra to install.
+- **Supabase** (database, login, realtime) stays on Supabase cloud.
+- **Backups** run from a small cron job on the VPS host (section 4).
 
 ---
 
@@ -14,100 +18,104 @@ Add one record:
 |------|---------|-------------------------|------|
 | A    | `tasks` | your VPS public IPv4    | 300  |
 
-If you use Cloudflare, set the record to **DNS only** (grey cloud) for the first
-deploy so Caddy can get its certificate.
-
-Check it from any computer (it should print the VPS IP):
+If you use Cloudflare, set it to **DNS only** (grey cloud) for the first deploy so the
+certificate can be issued. Check from any computer:
 
 ```bash
 dig +short tasks.yourdomain.com
 ```
 
-## 2. Open ports 80 and 443 (Oracle has TWO firewalls)
+Ports 80/443 are already open (your other Coolify apps use them).
 
-**a) Oracle Cloud console:** Networking → Virtual cloud networks → your VCN →
-Security Lists (or the subnet's Network Security Group) → Add Ingress Rules:
+## 2. Create the app in Coolify
 
-- Source `0.0.0.0/0`, TCP, destination port `80`
-- Source `0.0.0.0/0`, TCP, destination port `443`
+1. Open Coolify → **Projects** → pick a project (or create "Tasks") → **+ New** → **Application**.
+2. Source:
+   - **Private Repository (with GitHub App)** if `Robbie350/tasks` is private. Follow
+     Coolify's prompt to create/connect its GitHub App and give it access to the `tasks` repo.
+   - **Public Repository** if it's public: paste `https://github.com/Robbie350/tasks`.
+3. Branch: `main`.
+4. **Build Pack: Dockerfile** (not Nixpacks, not Docker Compose).
+5. **Ports Exposes: `3000`**.
+6. Continue / Save.
 
-**b) On the VPS itself:** Oracle's Ubuntu images ship with iptables rules that
-block everything except SSH. Insert the rules *before* the final REJECT, then save:
+On the app's **Configuration → General** page:
 
-```bash
-sudo iptables -I INPUT 6 -m state --state NEW -p tcp --dport 80 -j ACCEPT
-sudo iptables -I INPUT 6 -m state --state NEW -p tcp --dport 443 -j ACCEPT
-sudo netfilter-persistent save
-```
+- **Domains:** `https://tasks.yourdomain.com` (include `https://` so Coolify gets a certificate).
 
-(Do not run `ufw enable` on top of this; it can lock you out of SSH.)
+## 3. Environment variables
 
-## 3. Install Docker
+App → **Environment Variables**. Add:
 
-```bash
-curl -fsSL https://get.docker.com | sudo sh
-sudo usermod -aG docker $USER
-```
+| Name | Value | Build time | Runtime |
+|---|---|---|---|
+| `NEXT_PUBLIC_SUPABASE_URL` | Supabase → Project Settings → API → URL | ✅ | ✅ |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | same page, `anon` `public` key | ✅ | ✅ |
+| `SUPABASE_SERVICE_ROLE_KEY` | same page, `service_role` key (needed from step 3) | ❌ | ✅ |
 
-Log out and back in, then check: `docker run --rm hello-world`.
+"Build time" is the checkbox Coolify labels **Available at Buildtime** (older versions:
+**Build Variable?**). The `NEXT_PUBLIC_*` values must be available at build time because
+Next.js bakes them into the browser code. The service-role key is secret: runtime only,
+never build time.
 
-## 4. Get the code onto the VPS
+Then click **Deploy**. Watch the build log; the first build on the ARM CPU takes a few
+minutes. When it finishes, open `https://tasks.yourdomain.com` – the Supabase badge
+should say **Connected**.
 
-```bash
-git clone https://github.com/YOUR-USER/team-task-board.git
-cd team-task-board
-cp .env.example .env
-chmod 600 .env
-nano .env
-```
+**Updates:** with the GitHub App source, Coolify redeploys automatically on every push to
+`main`. With a public-repo source, click **Redeploy** (or set up the webhook Coolify shows).
+If you change a `NEXT_PUBLIC_*` value, redeploy so it's rebuilt.
 
-Fill in `.env`:
+## 4. Nightly database backup (on the VPS host)
 
-- `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY` – Supabase → Project Settings → API
-- `SUPABASE_SERVICE_ROLE_KEY` – same page (secret; stays on the server)
-- `DOMAIN=tasks.yourdomain.com`
-- `SUPABASE_DB_URL` – Supabase → **Connect** → *Session pooler* string (IPv4), with your DB password
+Supabase's free plan has no downloadable backups, so the VPS keeps its own.
 
-## 5. Start it
+Get the connection string: Supabase → **Connect** → **Session pooler** (works over IPv4).
+Replace `[YOUR-PASSWORD]` with your database password.
 
-```bash
-docker compose up -d --build
-docker compose logs -f caddy
-```
-
-Wait for a line saying the certificate was obtained, then open
-`https://tasks.yourdomain.com`. The Supabase badge should say **Connected**.
-
-Updating later:
+On the VPS:
 
 ```bash
-git pull && docker compose up -d --build
+git clone https://github.com/Robbie350/tasks.git ~/tasks-repo
 ```
-
-The first build takes a few minutes on the ARM CPU; later builds are faster.
-
-## 6. Nightly database backup
-
-Test it once:
 
 ```bash
-./deploy/backup.sh
+nano ~/.tasks-backup.env
 ```
 
-Then schedule it (03:15 every night):
+Put in one line:
+
+```
+SUPABASE_DB_URL=postgresql://postgres.xxxx:YOUR-PASSWORD@aws-0-region.pooler.supabase.com:5432/postgres
+```
+
+Lock it down and test:
 
 ```bash
-(crontab -l 2>/dev/null; echo "15 3 * * * $HOME/team-task-board/deploy/backup.sh >> $HOME/backup.log 2>&1") | crontab -
+chmod 600 ~/.tasks-backup.env
 ```
 
-Backups land in `deploy/backups/` and are kept for 14 days. To keep a copy off
-the VPS too, occasionally download one with `scp`.
+```bash
+~/tasks-repo/deploy/backup.sh
+```
+
+It should print `Backup written: /home/ubuntu/tasks-backups/db-....sql.gz`.
+Schedule it for 03:15 every night:
+
+```bash
+(crontab -l 2>/dev/null; echo "15 3 * * * $HOME/tasks-repo/deploy/backup.sh >> $HOME/tasks-backup.log 2>&1") | crontab -
+```
+
+Backups are kept 14 days in `~/tasks-backups`. Occasionally copy one off the VPS (`scp`).
+If the repo is private, `git clone` asks for a username and a GitHub personal access
+token as the password.
 
 ## Troubleshooting
 
 | Symptom | Likely cause |
 |---|---|
-| Browser times out | Step 2 – one of the two firewalls still blocks 80/443 |
-| Caddy log: certificate / ACME errors | DNS not pointing at the VPS yet, or Cloudflare proxy on |
-| Badge says "Not configured" | `.env` values missing; rebuild with `docker compose up -d --build` (public keys are baked in at build time) |
+| Build fails at `npm run build` | Check the Coolify build log; paste the error |
+| Badge says "Not configured" | `NEXT_PUBLIC_*` vars missing or not ticked as build time; fix and redeploy |
+| "No available server" / 404 from proxy | Domain not set on the app, or port not `3000` |
+| Certificate errors | DNS not pointing at the VPS yet, or Cloudflare proxy (orange cloud) on |
 | `pg_dump` connection error | Use the *Session pooler* string, not the direct one (direct is IPv6-only) |
