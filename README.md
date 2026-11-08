@@ -33,6 +33,23 @@ See [deploy/DEPLOY.md](deploy/DEPLOY.md): DNS, Coolify app setup, environment va
 - `src/lib/supabase/admin.ts` – secret-key client, server-only; used after an admin check
 - `src/app/(app)/admin/users/` – user management (admin only)
 
+## Task flow rules (agreed)
+
+These refine the original spec and are what step 5 enforces in the database.
+
+| Action | Who | Result |
+|---|---|---|
+| Create task | managers | assignees → **To Do**, nobody → **Unassigned** |
+| Grab | any specialist or manager | Unassigned → To Do, grabber assigned |
+| Join | any specialist or manager | allowed in To Do, In Progress **and Review** |
+| Leave | anyone on the task | last person leaves in **To Do** → back to Unassigned; in **In Progress / Review** → task **stays** in its column with nobody on it |
+| Move To Do → In Progress → Review | only people **assigned** to the task | |
+| Approve (Review → Done) | a manager **not assigned** to the task | |
+| Reject (Review → In Progress) | a manager **not assigned** to the task | note required, assignees notified |
+| Reopen Done | nobody (v1) | create a new task instead |
+
+Admins manage users only: they can't create, be assigned to, move or approve tasks.
+
 ## Security rules
 
 - The `SUPABASE_SERVICE_ROLE_KEY` is server-only and must never be prefixed with `NEXT_PUBLIC_`.
@@ -44,7 +61,7 @@ See [deploy/DEPLOY.md](deploy/DEPLOY.md): DNS, Coolify app setup, environment va
 1. [x] Project setup
 2. [x] Auth and roles
 3. [x] Admin screen
-4. [ ] Board (read-only) + create task
+4. [x] Board (read-only) + create task
 5. [ ] Task flow (grab / join / leave / move / approve / reject)
 6. [ ] Task detail panel (notes + activity)
 7. [ ] Polish (realtime, filters, overdue, notifications)
