@@ -77,6 +77,7 @@ export function Board({
   unreadTaskIds = [],
   labels = [],
   archivedCount = 0,
+  initialOpenId,
   toolbarEnd,
 }: {
   tasks: Task[];
@@ -85,6 +86,7 @@ export function Board({
   unreadTaskIds?: string[];
   labels?: TeamLabel[];
   archivedCount?: number;
+  initialOpenId?: string;
   toolbarEnd?: React.ReactNode;
 }) {
   const { t, tn, tr } = useT();
@@ -116,7 +118,8 @@ export function Board({
   const [, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
   const [dragging, setDragging] = useState<Task | null>(null);
-  const [openId, setOpenId] = useState<string | null>(null);
+  // Opened from a link (e.g. the Telegram "Open task" button): /?task=<id>
+  const [openId, setOpenId] = useState<string | null>(initialOpenId ?? null);
   const [rejectMode, setRejectMode] = useState(false);
 
   useEffect(() => {

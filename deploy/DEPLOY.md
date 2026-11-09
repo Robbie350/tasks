@@ -113,6 +113,18 @@ Backups are kept 14 days in `~/tasks-backups`. Occasionally copy one off the VPS
 If the repo is private, `git clone` asks for a username and a GitHub personal access
 token as the password.
 
+## 5. Telegram notifications (optional)
+
+1. In Telegram, create a bot with **@BotFather** (`/newbot`) and copy its token.
+2. Coolify → app → **Environment Variables**: add `TELEGRAM_BOT_TOKEN` with the token,
+   **Available at Runtime** only (not Buildtime). Redeploy.
+3. Sign in as the **admin** → **My account** → **Telegram bot** → **Connect bot to this site**.
+   (Repeat this if the site's address ever changes.)
+4. Everyone can now press **Connect Telegram** on their **My account** page.
+
+People get a message when they're assigned a task or one is sent back from review,
+in their own language, with an **Open task** button. `/stop` in the bot turns it off.
+
 ## Troubleshooting
 
 | Symptom | Likely cause |
@@ -121,4 +133,6 @@ token as the password.
 | Badge says "Not configured" | `NEXT_PUBLIC_*` vars missing or not ticked as build time; fix and redeploy |
 | "No available server" / 404 from proxy | Domain not set on the app, or port not `3000` |
 | Certificate errors | DNS not pointing at the VPS yet, or Cloudflare proxy (orange cloud) on |
+| Telegram: "isn't set up" on My account | `TELEGRAM_BOT_TOKEN` missing (runtime) or wrong; redeploy after adding it |
+| Telegram: Connect works but no messages arrive | Admin hasn't pressed **Connect bot to this site**, or the site isn't on https |
 | `pg_dump` connection error | Use the *Session pooler* string, not the direct one (direct is IPv6-only) |

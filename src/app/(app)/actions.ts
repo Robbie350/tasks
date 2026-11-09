@@ -1,6 +1,8 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { after } from "next/server";
+import { sendTaskNotifications } from "@/lib/telegram";
 import { getCurrentProfile } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 
@@ -47,6 +49,7 @@ export async function createTask(
     return { ok: false, error: "Couldn't reach the server. Check your connection and try again." };
   }
 
+  after(sendTaskNotifications);
   revalidatePath("/");
   return { ok: true };
 }

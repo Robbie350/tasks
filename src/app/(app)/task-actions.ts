@@ -1,6 +1,8 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { after } from "next/server";
+import { sendTaskNotifications } from "@/lib/telegram";
 import { createClient } from "@/lib/supabase/server";
 import { getArchivedTasks } from "@/lib/board";
 import { createAdminClient } from "@/lib/supabase/admin";
@@ -55,7 +57,9 @@ export async function approveTask(taskId: string) {
 
 export async function rejectTask(taskId: string, note: string) {
   if (!note.trim()) return { ok: false, error: "Write a note saying what needs to change." } as const;
-  return call("reject_task", { p_task_id: taskId, p_note: note.trim() });
+  const res = await call("reject_task", { p_task_id: taskId, p_note: note.trim() });
+  if (res.ok) after(sendTaskNotifications);
+  return res;
 }
 
 export async function updateTask(

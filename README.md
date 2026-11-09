@@ -81,4 +81,4 @@ Admins manage users only: they can't create, be assigned to, move or approve tas
 - [x] D: Phone layout, archive Done, search and labels
 - [x] E: Checklists and attachments on team tasks
 - [x] F: Reports (and profile photos)
-- [ ] G: Telegram / email notifications
+- [x] G: Telegram notifications

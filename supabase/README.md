@@ -17,6 +17,7 @@ Each script is safe to run again.
 | `0009_archive_and_labels.sql` | D | `done_at` for archiving, team labels (`task_labels`, `set_task_labels()`) |
 | `0010_checklists_attachments.sql` | E | task checklists, `task_attachments`, private `task-files` storage bucket (25 MB per file) |
 | `0011_reports_avatars.sql` | F | report functions (managers + admin), `set_my_avatar()`, public `avatars` bucket (2 MB) |
+| `0012_telegram.sql` | G | Telegram links, one-time link codes, notification sending queue |
 
 ## Creating the first admin (once)
 

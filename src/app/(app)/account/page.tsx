@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import { requireProfile } from "@/lib/auth";
 import { getI18n } from "@/i18n/server";
 import { AppearanceForm, LanguageForm, NameForm, PasswordForm, PhotoForm } from "./forms";
+import { BotSetupSection, TelegramSection } from "./telegram-section";
+import { getBotSetup, getTelegramStatus } from "./telegram-actions";
 
 export async function generateMetadata(): Promise<Metadata> {
   const { t } = await getI18n();
@@ -11,6 +13,7 @@ export async function generateMetadata(): Promise<Metadata> {
 export default async function AccountPage() {
   const me = await requireProfile();
   const { t } = await getI18n();
+  const [telegram, botSetup] = await Promise.all([getTelegramStatus(), getBotSetup()]);
 
   return (
     <main className="mx-auto max-w-2xl space-y-6 p-4 sm:p-6">
@@ -36,6 +39,16 @@ export default async function AccountPage() {
       <Section title={t("account.appearanceTitle")} description={t("account.appearanceDesc")}>
         <AppearanceForm theme={me.theme} accent={me.accent} />
       </Section>
+
+      <Section title={t("account.telegramTitle")} description={t("account.telegramDesc")}>
+        <TelegramSection initial={telegram} />
+      </Section>
+
+      {botSetup && (
+        <Section title={t("account.botTitle")} description={t("account.botDesc")}>
+          <BotSetupSection setup={botSetup} />
+        </Section>
+      )}
 
       <Section title={t("account.passwordTitle")} description={t("account.passwordDesc")}>
         <PasswordForm />

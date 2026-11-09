@@ -3,7 +3,8 @@ import { NextResponse, type NextRequest } from "next/server";
 import { isSupabaseConfigured, supabaseAnonKey, supabaseUrl } from "./env";
 
 // Paths reachable without being signed in.
-const PUBLIC_PATHS = ["/login", "/api/health"];
+// /api/telegram is called by Telegram and checks its own secret.
+const PUBLIC_PATHS = ["/login", "/api/health", "/api/telegram"];
 
 function isPublic(pathname: string) {
   return PUBLIC_PATHS.some((p) => pathname === p || pathname.startsWith(p + "/"));
