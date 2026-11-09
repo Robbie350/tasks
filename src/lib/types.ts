@@ -89,7 +89,7 @@ export type Activity = {
 };
 
 /** Minimal person info the board needs for names and avatars. */
-export type Person = Pick<Profile, "id" | "full_name" | "role" | "is_active">;
+export type Person = Pick<Profile, "id" | "full_name" | "role" | "is_active" | "avatar_url">;
 
 /** Board columns, left to right. Labels come from the dictionary: status.<status>. */
 export const COLUMNS: { status: TaskStatus }[] = [

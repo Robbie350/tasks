@@ -221,7 +221,7 @@ function PanelBody({
                 <ul className="space-y-2">
                   {assignees.map((p) => (
                     <li key={p.id} className="flex items-center gap-3 text-sm">
-                      <Avatar id={p.id} name={p.full_name} className="ring-0" />
+                      <Avatar id={p.id} name={p.full_name} url={p.avatar_url} className="ring-0" />
                       <span>
                         {p.full_name}
                         {p.id === me.id && <span className="text-muted-foreground"> ({t("common.you")})</span>}

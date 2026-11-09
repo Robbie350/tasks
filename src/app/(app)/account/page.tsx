@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { requireProfile } from "@/lib/auth";
 import { getI18n } from "@/i18n/server";
-import { AppearanceForm, LanguageForm, NameForm, PasswordForm } from "./forms";
+import { AppearanceForm, LanguageForm, NameForm, PasswordForm, PhotoForm } from "./forms";
 
 export async function generateMetadata(): Promise<Metadata> {
   const { t } = await getI18n();
@@ -20,6 +20,10 @@ export default async function AccountPage() {
           {me.email} · {t(`roles.${me.role}`)}
         </p>
       </div>
+
+      <Section title={t("account.photoTitle")} description={t("account.photoDesc")}>
+        <PhotoForm id={me.id} name={me.full_name} url={me.avatar_url} />
+      </Section>
 
       <Section title={t("account.nameTitle")} description={t("account.nameDesc")}>
         <NameForm fullName={me.full_name} />

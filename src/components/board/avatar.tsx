@@ -23,12 +23,26 @@ function colorFor(id: string) {
 export function Avatar({
   id,
   name,
+  url,
   className,
 }: {
   id: string;
   name: string;
+  url?: string | null;
   className?: string;
 }) {
+  if (url) {
+    return (
+      // eslint-disable-next-line @next/next/no-img-element -- small remote avatar, no optimisation needed
+      <img
+        src={url}
+        alt={name}
+        title={name}
+        loading="lazy"
+        className={cn("inline-block size-7 shrink-0 rounded-full object-cover ring-2 ring-card", className)}
+      />
+    );
+  }
   return (
     <span
       title={name}
@@ -43,13 +57,19 @@ export function Avatar({
   );
 }
 
-export function AvatarStack({ people, max = 3 }: { people: { id: string; full_name: string }[]; max?: number }) {
+export function AvatarStack({
+  people,
+  max = 3,
+}: {
+  people: { id: string; full_name: string; avatar_url?: string | null }[];
+  max?: number;
+}) {
   const shown = people.slice(0, max);
   const extra = people.length - shown.length;
   return (
     <div className="flex -space-x-1">
       {shown.map((p) => (
-        <Avatar key={p.id} id={p.id} name={p.full_name} />
+        <Avatar key={p.id} id={p.id} name={p.full_name} url={p.avatar_url} />
       ))}
       {extra > 0 && (
         <span

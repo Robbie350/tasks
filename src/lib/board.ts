@@ -60,7 +60,7 @@ export async function getBoardData(): Promise<{
       .returns<TaskRow[]>(),
     supabase
       .from("profiles")
-      .select("id, full_name, role, is_active")
+      .select("id, full_name, role, is_active, avatar_url")
       .order("full_name")
       .returns<Person[]>(),
     // RLS returns only the signed-in user's own notifications.

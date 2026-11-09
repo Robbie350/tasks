@@ -147,7 +147,7 @@ export function NewTaskDialog({ people, labels = [] }: { people: Person[]; label
                     onChange={() => toggle(p.id)}
                     className="size-4"
                   />
-                  <Avatar id={p.id} name={p.full_name} className="ring-0" />
+                  <Avatar id={p.id} name={p.full_name} url={p.avatar_url} className="ring-0" />
                   <span className="text-sm">{p.full_name}</span>
                   <span className="ml-auto text-xs text-muted-foreground">
                     {t(`roles.${p.role}`)}

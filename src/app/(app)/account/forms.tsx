@@ -17,7 +17,8 @@ import {
   type Locale,
   type Theme,
 } from "@/lib/preferences";
-import { changePassword, saveProfile, type Result } from "./actions";
+import { Avatar } from "@/components/board/avatar";
+import { changePassword, removeAvatar, saveProfile, uploadAvatar, type Result } from "./actions";
 
 function Message({ result }: { result: Result | null }) {
   const { tr } = useT();
@@ -209,6 +210,92 @@ export function LanguageForm({ locale }: { locale: Locale }) {
         ))}
       </Select>
       {error && <p className="text-sm text-destructive">{error}</p>}
+    </div>
+  );
+}
+
+/** Crop to a centred square and shrink to 256x256 WebP (falls back to JPEG). */
+async function toSquareImage(file: File): Promise<Blob> {
+  const bitmap = await createImageBitmap(file);
+  const side = Math.min(bitmap.width, bitmap.height);
+  const canvas = document.createElement("canvas");
+  canvas.width = canvas.height = 256;
+  canvas.getContext("2d")!.drawImage(
+    bitmap,
+    (bitmap.width - side) / 2,
+    (bitmap.height - side) / 2,
+    side,
+    side,
+    0,
+    0,
+    256,
+    256
+  );
+  const webp = await new Promise<Blob | null>((r) => canvas.toBlob(r, "image/webp", 0.85));
+  if (webp && webp.type === "image/webp") return webp;
+  return (await new Promise<Blob | null>((r) => canvas.toBlob(r, "image/jpeg", 0.85)))!;
+}
+
+export function PhotoForm({ id, name, url }: { id: string; name: string; url: string | null }) {
+  const { t, tr } = useT();
+  const [error, setError] = useState<string | null>(null);
+  const [pending, start] = useTransition();
+
+  return (
+    <div className="flex flex-wrap items-center gap-4">
+      <Avatar id={id} name={name} url={url} className="size-16 text-lg ring-0" />
+      <div className="space-y-2">
+        <div className="flex flex-wrap gap-2">
+          <label
+            className={cn(
+              "inline-flex h-8 cursor-pointer items-center rounded-md border px-3 text-sm font-medium hover:bg-muted",
+              pending && "pointer-events-none opacity-60"
+            )}
+          >
+            {pending ? t("common.saving") : t("account.uploadPhoto")}
+            <input
+              type="file"
+              accept="image/*"
+              className="sr-only"
+              disabled={pending}
+              onChange={(e) => {
+                const file = e.target.files?.[0];
+                e.target.value = "";
+                if (!file) return;
+                setError(null);
+                start(async () => {
+                  try {
+                    const blob = await toSquareImage(file);
+                    const fd = new FormData();
+                    fd.set("file", new File([blob], `avatar.${blob.type === "image/webp" ? "webp" : "jpg"}`, { type: blob.type }));
+                    const res = await uploadAvatar(fd);
+                    if (!res.ok) setError(tr(res.error));
+                  } catch {
+                    setError(tr("Use a JPG, PNG or WebP image up to 2 MB."));
+                  }
+                });
+              }}
+            />
+          </label>
+          {url && (
+            <Button
+              variant="ghost"
+              size="sm"
+              disabled={pending}
+              onClick={() =>
+                start(async () => {
+                  const res = await removeAvatar();
+                  if (!res.ok) setError(tr(res.error));
+                })
+              }
+            >
+              {t("account.removePhoto")}
+            </Button>
+          )}
+        </div>
+        <p className="text-xs text-muted-foreground">{t("account.photoHint")}</p>
+        {error && <p className="text-sm text-destructive">{error}</p>}
+      </div>
     </div>
   );
 }

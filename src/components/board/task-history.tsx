@@ -165,7 +165,7 @@ export function TaskHistory({
               const actor = people.get(a.actor_id);
               return (
                 <li key={a.id} className="flex gap-3 text-sm">
-                  <Avatar id={a.actor_id} name={actor?.full_name ?? "?"} className="size-6 text-[10px] ring-0" />
+                  <Avatar id={a.actor_id} name={actor?.full_name ?? "?"} url={actor?.avatar_url} className="size-6 text-[10px] ring-0" />
                   <p className="min-w-0 flex-1">
                     <span className="font-medium">{actor?.full_name ?? t("common.someone")}</span>{" "}
                     {describe(a, people, t)}
@@ -211,7 +211,7 @@ function NoteItem({
       )}
     >
       <div className="mb-1.5 flex flex-wrap items-center gap-2 text-xs">
-        <Avatar id={note.author_id} name={author?.full_name ?? "?"} className="size-6 text-[10px] ring-0" />
+        <Avatar id={note.author_id} name={author?.full_name ?? "?"} url={author?.avatar_url} className="size-6 text-[10px] ring-0" />
         <span className="font-medium">{author?.full_name ?? t("common.formerUser")}</span>
         {author && !author.is_active && <span className="text-muted-foreground">({t("common.inactive")})</span>}
         <span className="text-muted-foreground">
