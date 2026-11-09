@@ -19,6 +19,8 @@ BACKUP_DIR="${BACKUP_DIR:-$HOME/tasks-backups}"
 mkdir -p "$BACKUP_DIR"
 chmod 700 "$BACKUP_DIR"
 FILE="$BACKUP_DIR/db-$(date +%Y-%m-%d_%H%M).sql.gz"
+# If anything below fails, don't leave a half-written file behind.
+trap 'rm -f "$FILE.tmp"' EXIT
 
 # pg_dump runs in a container so its version matches Supabase's Postgres 17.
 docker run --rm postgres:17-alpine \
