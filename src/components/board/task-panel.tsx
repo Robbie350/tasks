@@ -8,7 +8,8 @@ import { Label } from "@/components/ui/label";
 import { Select } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
-import type { Person, Task, TaskPriority } from "@/lib/types";
+import type { Person, Task, TaskPriority, TeamLabel } from "@/lib/types";
+import { CHIP, isColor } from "@/components/personal/palette";
 import { useT } from "@/i18n/client";
 import {
   canEdit,
@@ -20,7 +21,7 @@ import {
   nextStep,
   type Me,
 } from "@/lib/rules";
-import { rejectTask, updateTask } from "@/app/(app)/task-actions";
+import { rejectTask, setTaskLabels, updateTask } from "@/app/(app)/task-actions";
 import type { BoardActions } from "./board";
 import { Avatar } from "./avatar";
 import { DueDate } from "./due-date";
@@ -34,6 +35,7 @@ const PRIORITY_DOT = {
 } as const;
 
 export function TaskPanel({
+  labels,
   task,
   people,
   me,
@@ -41,6 +43,7 @@ export function TaskPanel({
   startInRejectMode,
   onClose,
 }: {
+  labels: TeamLabel[];
   task: Task | null;
   people: Map<string, Person>;
   me: Me;
@@ -70,6 +73,7 @@ export function TaskPanel({
     >
       {task && (
         <PanelBody
+          labels={labels}
           key={task.id + String(startInRejectMode)}
           task={task}
           people={people}
@@ -84,6 +88,7 @@ export function TaskPanel({
 }
 
 function PanelBody({
+  labels,
   task,
   people,
   me,
@@ -91,6 +96,7 @@ function PanelBody({
   startInRejectMode,
   close,
 }: {
+  labels: TeamLabel[];
   task: Task;
   people: Map<string, Person>;
   me: Me;
@@ -139,6 +145,39 @@ function PanelBody({
               <p className="text-sm whitespace-pre-wrap">{task.description}</p>
             ) : (
               <p className="text-sm text-muted-foreground italic">{t("panel.noDescription")}</p>
+            )}
+
+            {/* Labels: managers toggle them, everyone sees them */}
+            {(labels.length > 0 && (canEdit(me) || task.label_ids.length > 0)) && (
+              <section className="space-y-2">
+                <h3 className="text-sm font-semibold">{t("board.labels")}</h3>
+                <div className="flex flex-wrap gap-1.5">
+                  {labels
+                    .filter((l) => canEdit(me) || task.label_ids.includes(l.id))
+                    .map((l) => {
+                      const on = task.label_ids.includes(l.id);
+                      const chip = cn("rounded px-2 py-1 text-xs font-medium", CHIP[isColor(l.color) ? l.color : "gray"]);
+                      return canEdit(me) ? (
+                        <button
+                          key={l.id}
+                          aria-pressed={on}
+                          onClick={() =>
+                            actions.run(() =>
+                              setTaskLabels(task.id, on ? task.label_ids.filter((x) => x !== l.id) : [...task.label_ids, l.id])
+                            )
+                          }
+                          className={cn(chip, "transition", on ? "ring-2 ring-foreground/60" : "opacity-45 hover:opacity-100")}
+                        >
+                          {l.name}
+                        </button>
+                      ) : (
+                        <span key={l.id} className={chip}>
+                          {l.name}
+                        </span>
+                      );
+                    })}
+                </div>
+              </section>
             )}
 
             {/* People */}

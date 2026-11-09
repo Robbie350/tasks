@@ -2,7 +2,8 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
-import type { Activity, Note, TaskPriority, TaskStatus } from "@/lib/types";
+import { getArchivedTasks } from "@/lib/board";
+import type { Activity, Note, Task, TaskPriority, TaskStatus } from "@/lib/types";
 
 // Thin wrappers around the database functions. Each runs with the signed-in
 // user's session, and the database checks whether they're allowed.
@@ -108,4 +109,56 @@ export async function editNote(noteId: string, body: string) {
 
 export async function deleteNote(noteId: string) {
   return call("delete_note", { p_note_id: noteId });
+}
+
+// ---------------------------------------------------------------------------
+// Archive and team labels (Phase D)
+// ---------------------------------------------------------------------------
+
+export async function loadArchivedTasks(): Promise<{ ok: true; tasks: Task[] } | { ok: false; error: string }> {
+  try {
+    return { ok: true, tasks: await getArchivedTasks() };
+  } catch (e) {
+    console.error("loadArchivedTasks failed", e);
+    return { ok: false, error: "Couldn't reach the server. Check your connection and try again." };
+  }
+}
+
+export async function setTaskLabels(taskId: string, labelIds: string[]) {
+  return call("set_task_labels", { p_task_id: taskId, p_label_ids: labelIds });
+}
+
+const LABEL_COLORS = ["gray", "blue", "green", "yellow", "orange", "red", "purple", "pink"];
+
+async function labelWrite(
+  fn: (supabase: Awaited<ReturnType<typeof createClient>>) => PromiseLike<{ error: { message: string } | null }>
+): Promise<ActionResult> {
+  try {
+    const supabase = await createClient();
+    const { error } = await fn(supabase);
+    // RLS refuses non-managers; say it in plain words.
+    if (error) return { ok: false, error: /row-level security/i.test(error.message) ? "Only managers can edit tasks." : error.message };
+  } catch (e) {
+    console.error("label write failed", e);
+    return { ok: false, error: "Couldn't reach the server. Check your connection and try again." };
+  }
+  revalidatePath("/");
+  return { ok: true };
+}
+
+export async function createTeamLabel(name: string, color: string) {
+  if (!name.trim()) return { ok: false, error: "A label needs a name." } as const;
+  const c = LABEL_COLORS.includes(color) ? color : "blue";
+  return labelWrite((s) => s.from("task_labels").insert({ name: name.trim().slice(0, 30), color: c }));
+}
+
+export async function updateTeamLabel(id: string, patch: { name?: string; color?: string }) {
+  const clean: { name?: string; color?: string } = {};
+  if (patch.name?.trim()) clean.name = patch.name.trim().slice(0, 30);
+  if (patch.color && LABEL_COLORS.includes(patch.color)) clean.color = patch.color;
+  return labelWrite((s) => s.from("task_labels").update(clean).eq("id", id));
+}
+
+export async function deleteTeamLabel(id: string) {
+  return labelWrite((s) => s.from("task_labels").delete().eq("id", id));
 }

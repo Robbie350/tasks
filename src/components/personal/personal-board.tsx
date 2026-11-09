@@ -5,7 +5,8 @@ import {
   DndContext,
   DragOverlay,
   KeyboardSensor,
-  PointerSensor,
+  MouseSensor,
+  TouchSensor,
   closestCorners,
   useSensor,
   useSensors,
@@ -280,7 +281,9 @@ export function PersonalBoard({ initial }: { initial: PersonalBoardData }) {
   // Drag and drop: columns sideways, cards within and between columns.
   // ---------------------------------------------------------------------------
   const sensors = useSensors(
-    useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
+    useSensor(MouseSensor, { activationConstraint: { distance: 5 } }),
+    // Press and hold to drag on touch screens; a normal swipe scrolls.
+    useSensor(TouchSensor, { activationConstraint: { delay: 250, tolerance: 8 } }),
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
   );
 
@@ -359,7 +362,7 @@ export function PersonalBoard({ initial }: { initial: PersonalBoardData }) {
   const activeColumn = active?.type === "column" ? columns.find((c) => c.id === active.id) : null;
 
   return (
-    <div className={cn("min-h-[calc(100vh-57px)]", BOARD_BG[background])}>
+    <div className={cn("min-h-[calc(100dvh-53px)] sm:min-h-[calc(100dvh-61px)]", BOARD_BG[background])}>
       <main className="p-4 sm:p-6">
         {/* Toolbar */}
         <div className="mb-4 flex flex-wrap items-center gap-3">
@@ -377,7 +380,7 @@ export function PersonalBoard({ initial }: { initial: PersonalBoardData }) {
               onChange={(e) => setQuery(e.target.value)}
               placeholder={t("personal.search")}
               aria-label={t("personal.search")}
-              className="h-8 w-52 bg-background pl-8"
+              className="h-8 w-44 bg-background pl-8 sm:w-52"
             />
           </div>
           <Select
@@ -414,7 +417,7 @@ export function PersonalBoard({ initial }: { initial: PersonalBoardData }) {
           }}
         >
           <SortableContext items={columns.map((c) => COL + c.id)} strategy={horizontalListSortingStrategy}>
-            <div className="flex items-start gap-4 overflow-x-auto pb-6">
+            <div className="-mx-4 flex snap-x snap-mandatory items-start gap-4 overflow-x-auto px-4 pb-6 sm:mx-0 sm:snap-none sm:px-0">
               {columns.map((c, i) => (
                 <ColumnView
                   key={c.id}
@@ -433,7 +436,7 @@ export function PersonalBoard({ initial }: { initial: PersonalBoardData }) {
               ))}
               <button
                 onClick={addColumn}
-                className="flex h-12 w-72 shrink-0 items-center justify-center gap-2 rounded-xl border-2 border-dashed text-sm text-muted-foreground hover:border-foreground/30 hover:text-foreground"
+                className="flex h-12 w-[85vw] shrink-0 snap-center items-center sm:w-72 justify-center gap-2 rounded-xl border-2 border-dashed text-sm text-muted-foreground hover:border-foreground/30 hover:text-foreground"
               >
                 <Plus className="size-4" /> {t("personal.addColumn")}
               </button>
@@ -532,7 +535,7 @@ function ColumnView({
       style={{ transform: CSS.Translate.toString(transform), transition }}
       aria-label={column.title}
       className={cn(
-        "flex w-72 shrink-0 flex-col rounded-xl border-t-4 p-3",
+        "flex w-[85vw] shrink-0 snap-center flex-col rounded-xl border-t-4 p-3 sm:w-72",
         COLUMN_BG[color],
         COLUMN_TOP[color],
         isDragging && "opacity-40"

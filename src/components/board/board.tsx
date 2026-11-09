@@ -4,7 +4,8 @@ import { useEffect, useMemo, useOptimistic, useState, useTransition } from "reac
 import {
   DndContext,
   DragOverlay,
-  PointerSensor,
+  MouseSensor,
+  TouchSensor,
   useDroppable,
   useSensor,
   useSensors,
@@ -13,11 +14,18 @@ import {
 } from "@dnd-kit/core";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { COLUMNS, type Person, type Task, type TaskStatus } from "@/lib/types";
+import { Search } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { LabelsManager } from "@/components/personal/labels-manager";
+import { COLUMNS, type Person, type Task, type TaskStatus, type TeamLabel } from "@/lib/types";
 import { dropTargets, type Me } from "@/lib/rules";
 import {
   approveTask,
+  createTeamLabel,
+  deleteTeamLabel,
   grabTask,
+  loadArchivedTasks,
+  updateTeamLabel,
   joinTask,
   leaveTask,
   moveTask,
@@ -67,17 +75,26 @@ export function Board({
   people,
   me,
   unreadTaskIds = [],
+  labels = [],
+  archivedCount = 0,
   toolbarEnd,
 }: {
   tasks: Task[];
   people: Person[];
   me: Me;
   unreadTaskIds?: string[];
+  labels?: TeamLabel[];
+  archivedCount?: number;
   toolbarEnd?: React.ReactNode;
 }) {
-  const { t, tr } = useT();
+  const { t, tn, tr } = useT();
   const peopleById = useMemo(() => new Map(people.map((p) => [p.id, p])), [people]);
   const unread = useMemo(() => new Set(unreadTaskIds), [unreadTaskIds]);
+  const labelsById = useMemo(() => new Map(labels.map((l) => [l.id, l])), [labels]);
+  const [query, setQuery] = useState("");
+  const [labelFilter, setLabelFilter] = useState("");
+  const [archived, setArchived] = useState<Task[] | null>(null);
+  const [loadingArchive, setLoadingArchive] = useState(false);
   const isWorker = me.role !== "admin";
 
   // Filter: "" = everyone, otherwise a person's id (me.id = "My tasks").
@@ -141,8 +158,10 @@ export function Board({
   };
 
   const sensors = useSensors(
-    // A small distance threshold keeps plain clicks working (they open the panel).
-    useSensor(PointerSensor, { activationConstraint: { distance: 6 } })
+    // Mouse: a small distance keeps plain clicks working (they open the panel).
+    useSensor(MouseSensor, { activationConstraint: { distance: 6 } }),
+    // Touch: press and hold to drag, so a normal swipe still scrolls the board.
+    useSensor(TouchSensor, { activationConstraint: { delay: 250, tolerance: 8 } })
   );
 
   const allowed = dragging ? dropTargets(dragging, me) : [];
@@ -183,11 +202,47 @@ export function Board({
     return () => window.removeEventListener(OPEN_TASK, onOpenTask);
   }, []);
 
-  // Filters apply to every column except Unassigned, which is the shared pool.
-  const visible = (t: Task) =>
-    !filter || t.status === "unassigned" || t.assignee_ids.includes(filter);
+  // Person filters apply to every column except Unassigned, the shared pool.
+  // Search and label filters apply everywhere.
+  const q = query.trim().toLowerCase();
+  const visible = (task: Task) =>
+    (!filter || task.status === "unassigned" || task.assignee_ids.includes(filter)) &&
+    (!labelFilter || task.label_ids.includes(labelFilter)) &&
+    (!q ||
+      task.title.toLowerCase().includes(q) ||
+      (task.description ?? "").toLowerCase().includes(q) ||
+      task.label_ids.some((id) => labelsById.get(id)?.name.toLowerCase().includes(q)));
 
-  const openTask = optimisticTasks.find((t) => t.id === openId) ?? null;
+  // Archived Done tasks are shown on request, below the recent ones.
+  const shown = archived
+    ? [...optimisticTasks, ...archived.filter((a) => !optimisticTasks.some((x) => x.id === a.id))]
+    : optimisticTasks;
+
+  async function toggleArchive() {
+    if (archived) return setArchived(null);
+    setLoadingArchive(true);
+    const res = await loadArchivedTasks();
+    setLoadingArchive(false);
+    if (res.ok) setArchived(res.tasks.map((x) => ({ ...x, position: -Infinity })));
+    else setError(res.error);
+  }
+
+  const labelStore = {
+    labels,
+    createLabel: (name: string, color: string) => {
+      actions.run(() => createTeamLabel(name, color));
+      return null;
+    },
+    updateLabel: (id: string, patch: { name?: string; color?: string }) => {
+      actions.run(() => updateTeamLabel(id, patch));
+    },
+    deleteLabel: (id: string) => {
+      setLabelFilter((f) => (f === id ? "" : f));
+      actions.run(() => deleteTeamLabel(id));
+    },
+  };
+
+  const openTask = shown.find((t) => t.id === openId) ?? null;
 
   return (
     <>
@@ -217,15 +272,66 @@ export function Board({
             </option>
           ))}
         </Select>
-        {filter && (
+        <div className="relative">
+          <Search className="pointer-events-none absolute top-1/2 left-2.5 size-4 -translate-y-1/2 text-muted-foreground" />
+          <Input
+            type="search"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder={t("board.search")}
+            aria-label={t("board.search")}
+            className="h-8 w-48 pl-8"
+          />
+        </div>
+        {labels.length > 0 && (
+          <Select
+            aria-label={t("board.labels")}
+            className="h-8 w-auto min-w-32"
+            value={labelFilter}
+            onChange={(e) => setLabelFilter(e.target.value)}
+          >
+            <option value="">{t("board.allLabels")}</option>
+            {labels.map((l) => (
+              <option key={l.id} value={l.id}>
+                {l.name}
+              </option>
+            ))}
+          </Select>
+        )}
+        {me.role === "manager" && <LabelsManager api={labelStore} />}
+        {(filter || q || labelFilter) && (
           <button
             className="text-xs text-muted-foreground underline-offset-4 hover:underline"
-            onClick={() => changeFilter("")}
+            onClick={() => {
+              changeFilter("");
+              setQuery("");
+              setLabelFilter("");
+            }}
           >
             {t("common.clearFilter")}
           </button>
         )}
         <div className="ml-auto">{toolbarEnd}</div>
+      </div>
+
+      {/* Phones: jump to a column (columns swipe sideways one at a time). */}
+      <div className="-mx-4 mb-3 flex gap-1.5 overflow-x-auto px-4 sm:hidden" role="navigation" aria-label={t("board.title")}>
+        {COLUMNS.map((col) => (
+          <button
+            key={col.status}
+            onClick={() =>
+              document
+                .getElementById(`column-${col.status}`)
+                ?.scrollIntoView({ behavior: "smooth", inline: "center", block: "nearest" })
+            }
+            className="shrink-0 rounded-full border bg-background px-3 py-1 text-xs font-medium whitespace-nowrap"
+          >
+            {t(`status.${col.status}`)}{" "}
+            <span className="text-muted-foreground">
+              {shown.filter((x) => x.status === col.status && visible(x)).length}
+            </span>
+          </button>
+        ))}
       </div>
 
       <DndContext
@@ -234,13 +340,13 @@ export function Board({
         onDragEnd={onDragEnd}
         onDragCancel={() => setDragging(null)}
       >
-        <div className="flex gap-4 overflow-x-auto pb-4 lg:grid lg:grid-cols-5 lg:overflow-visible">
+        <div className="-mx-4 flex snap-x snap-mandatory gap-4 overflow-x-auto px-4 pb-4 sm:mx-0 sm:px-0 lg:grid lg:snap-none lg:grid-cols-5 lg:overflow-visible">
           {COLUMNS.map((col) => (
             <Column
               key={col.status}
               status={col.status}
               label={t(`status.${col.status}`)}
-              tasks={optimisticTasks
+              tasks={shown
                 .filter((t) => t.status === col.status && visible(t))
                 .sort((a, b) => a.position - b.position)}
               state={
@@ -250,6 +356,16 @@ export function Board({
                     ? "allowed"
                     : "blocked"
               }
+              footer={
+                col.status === "done" && (archivedCount > 0 || archived) ? (
+                  <div className="mt-3 space-y-1 text-center">
+                    <Button variant="ghost" size="sm" className="w-full" onClick={toggleArchive} disabled={loadingArchive}>
+                      {archived ? t("board.hideArchived") : tn("board.showArchived", archivedCount)}
+                    </Button>
+                    <p className="text-[11px] text-muted-foreground">{t("board.archivedHint")}</p>
+                  </div>
+                ) : null
+              }
               render={(task) => (
                 <TaskCard
                   key={task.id}
@@ -258,6 +374,7 @@ export function Board({
                   me={me}
                   draggable={dropTargets(task, me).length > 0}
                   isNew={unread.has(task.id)}
+                  labelsById={labelsById}
                   onOpen={() => openPanel(task.id)}
                   onGrab={() => actions.grab(task)}
                 />
@@ -268,12 +385,13 @@ export function Board({
 
         <DragOverlay dropAnimation={null}>
           {dragging && (
-            <TaskCard task={dragging} people={peopleById} me={me} draggable={false} overlay />
+            <TaskCard task={dragging} people={peopleById} me={me} draggable={false} overlay labelsById={labelsById} />
           )}
         </DragOverlay>
       </DndContext>
 
       <TaskPanel
+        labels={labels}
         task={openTask}
         people={peopleById}
         me={me}
@@ -303,12 +421,14 @@ function Column({
   tasks,
   state,
   render,
+  footer,
 }: {
   status: TaskStatus;
   label: string;
   tasks: Task[];
   state: "idle" | "allowed" | "blocked";
   render: (task: Task) => React.ReactNode;
+  footer?: React.ReactNode;
 }) {
   const { t } = useT();
   const { setNodeRef, isOver } = useDroppable({ id: status, disabled: state === "blocked" });
@@ -317,9 +437,10 @@ function Column({
   return (
     <section
       ref={setNodeRef}
+      id={`column-${status}`}
       aria-label={label}
       className={cn(
-        "flex w-72 shrink-0 flex-col rounded-xl p-3 transition-[opacity,box-shadow] lg:w-auto",
+        "flex w-[85vw] shrink-0 snap-center flex-col rounded-xl p-3 transition-[opacity,box-shadow] sm:w-72 lg:w-auto",
         isPool
           ? "border border-dashed border-sky-300 bg-sky-50/70 dark:border-sky-800 dark:bg-sky-950/30"
           : "bg-zinc-100 dark:bg-zinc-900",
@@ -342,6 +463,7 @@ function Column({
           </p>
         )}
       </div>
+      {footer}
     </section>
   );
 }

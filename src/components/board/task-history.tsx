@@ -51,7 +51,7 @@ function describe(a: Activity, people: Map<string, Person>, t: Translator["t"]) 
       const fields = Array.isArray(a.details.fields) ? (a.details.fields as string[]) : [];
       const label = (f: string) =>
         f === "due date" ? t("history.fields.dueDate")
-        : f === "title" || f === "description" || f === "priority" ? t(`history.fields.${f}`)
+        : f === "title" || f === "description" || f === "priority" || f === "labels" ? t(`history.fields.${f}`)
         : f;
       return fields.length
         ? t("history.editedFields", { fields: fields.map(label).join(", ") })

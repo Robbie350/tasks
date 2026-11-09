@@ -10,8 +10,10 @@ import type { PLabel } from "@/lib/types";
 import { COLORS, DOT, isColor, type ColorName } from "./palette";
 import type { BoardApi } from "./personal-board";
 
+type LabelStore = Pick<BoardApi, "labels" | "createLabel" | "updateLabel" | "deleteLabel">;
+
 /** Toolbar popover: create, rename, recolour and delete labels. */
-export function LabelsManager({ api }: { api: BoardApi }) {
+export function LabelsManager({ api }: { api: LabelStore }) {
   const { t } = useT();
   const [open, setOpen] = useState(false);
   const [name, setName] = useState("");
@@ -71,7 +73,7 @@ export function LabelsManager({ api }: { api: BoardApi }) {
   );
 }
 
-function LabelRow({ label, api }: { label: PLabel; api: BoardApi }) {
+function LabelRow({ label, api }: { label: PLabel; api: LabelStore }) {
   const { t } = useT();
   const [name, setName] = useState(label.name);
   const color: ColorName = isColor(label.color) ? label.color : "gray";

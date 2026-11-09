@@ -52,6 +52,12 @@ const en = {
     overdue: "Overdue",
     dueDate: "Due date",
     notes: { one: "{n} note", few: "{n} notes", many: "{n} notes", other: "{n} notes" },
+    search: "Search tasks…",
+    allLabels: "All labels",
+    labels: "Labels",
+    showArchived: { one: "Show {n} archived task", few: "Show {n} archived tasks", many: "Show {n} archived tasks", other: "Show {n} archived tasks" },
+    hideArchived: "Hide archived",
+    archivedHint: "Done tasks are archived after 14 days.",
   },
   newTask: {
     button: "New task",
@@ -121,7 +127,7 @@ const en = {
     rejected: "rejected this → In Progress",
     editedFields: "edited the {fields}",
     editedGeneric: "edited this task",
-    fields: { title: "title", description: "description", priority: "priority", dueDate: "due date" },
+    fields: { title: "title", description: "description", priority: "priority", dueDate: "due date", labels: "labels" },
   },
   bell: {
     label: "Notifications",

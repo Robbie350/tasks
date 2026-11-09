@@ -14,6 +14,7 @@ Each script is safe to run again.
 | `0006_realtime_notifications.sql` | 7 | `mark_notifications_read`, turns on Realtime for the board tables |
 | `0007_preferences.sql` | A | theme / accent / language on profiles, `update_my_profile()` |
 | `0008_personal_board.sql` | C | personal columns, cards, labels, settings (owner-only RLS) |
+| `0009_archive_and_labels.sql` | D | `done_at` for archiving, team labels (`task_labels`, `set_task_labels()`) |
 
 ## Creating the first admin (once)
 

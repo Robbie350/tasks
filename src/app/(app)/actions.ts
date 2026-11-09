@@ -21,6 +21,7 @@ export async function createTask(
   const priority = String(formData.get("priority") ?? "medium");
   const dueDate = String(formData.get("due_date") ?? "");
   const assigneeIds = formData.getAll("assignees").map(String);
+  const labelIds = formData.getAll("labels").map(String);
 
   if (!title) return { ok: false, error: "Give the task a title." };
   if (title.length > 200) return { ok: false, error: "Keep the title under 200 characters." };
@@ -30,7 +31,7 @@ export async function createTask(
 
   try {
     const supabase = await createClient();
-    const { error } = await supabase.rpc("create_task", {
+    const { data: taskId, error } = await supabase.rpc("create_task", {
       p_title: title,
       p_description: description || null,
       p_priority: priority,
@@ -38,6 +39,9 @@ export async function createTask(
       p_assignee_ids: assigneeIds,
     });
     if (error) return { ok: false, error: error.message };
+    if (labelIds.length > 0 && taskId) {
+      await supabase.rpc("set_task_labels", { p_task_id: taskId, p_label_ids: labelIds });
+    }
   } catch (e) {
     console.error("create_task failed", e);
     return { ok: false, error: "Couldn't reach the server. Check your connection and try again." };

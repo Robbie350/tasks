@@ -7,16 +7,19 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import type { Person } from "@/lib/types";
+import type { Person, TeamLabel } from "@/lib/types";
+import { CHIP, isColor } from "@/components/personal/palette";
+import { cn } from "@/lib/utils";
 import { useT } from "@/i18n/client";
 import { createTask, type CreateTaskResult } from "@/app/(app)/actions";
 import { Avatar } from "./avatar";
 
-export function NewTaskDialog({ people }: { people: Person[] }) {
+export function NewTaskDialog({ people, labels = [] }: { people: Person[]; labels?: TeamLabel[] }) {
   const { t, tn, tr } = useT();
   const dialogRef = useRef<HTMLDialogElement>(null);
   const formRef = useRef<HTMLFormElement>(null);
   const [selected, setSelected] = useState<string[]>([]);
+  const [pickedLabels, setPickedLabels] = useState<string[]>([]);
   const [state, formAction, pending] = useActionState<CreateTaskResult | null, FormData>(
     createTask,
     null
@@ -29,6 +32,7 @@ export function NewTaskDialog({ people }: { people: Person[] }) {
     if (state?.ok) {
       formRef.current?.reset();
       setSelected([]);
+      setPickedLabels([]);
       dialogRef.current?.close();
     }
   }, [state]);
@@ -87,6 +91,39 @@ export function NewTaskDialog({ people }: { people: Person[] }) {
               <Input id="task-due" name="due_date" type="date" />
             </div>
           </div>
+
+          {labels.length > 0 && (
+            <fieldset className="space-y-2">
+              <legend className="text-sm font-medium">{t("board.labels")}</legend>
+              <div className="flex flex-wrap gap-1.5">
+                {labels.map((l) => {
+                  const on = pickedLabels.includes(l.id);
+                  return (
+                    <label
+                      key={l.id}
+                      className={cn(
+                        "cursor-pointer rounded px-2 py-1 text-xs font-medium transition",
+                        CHIP[isColor(l.color) ? l.color : "gray"],
+                        on ? "ring-2 ring-foreground/60" : "opacity-50 hover:opacity-100"
+                      )}
+                    >
+                      <input
+                        type="checkbox"
+                        name="labels"
+                        value={l.id}
+                        checked={on}
+                        onChange={() =>
+                          setPickedLabels((s) => (s.includes(l.id) ? s.filter((x) => x !== l.id) : [...s, l.id]))
+                        }
+                        className="sr-only"
+                      />
+                      {l.name}
+                    </label>
+                  );
+                })}
+              </div>
+            </fieldset>
+          )}
 
           <fieldset className="space-y-2">
             <legend className="text-sm font-medium">

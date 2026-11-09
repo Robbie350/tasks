@@ -4,7 +4,8 @@ import { useDraggable } from "@dnd-kit/core";
 import { MessageSquare } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import type { Person, Task } from "@/lib/types";
+import type { Person, Task, TeamLabel } from "@/lib/types";
+import { CHIP, isColor } from "@/components/personal/palette";
 import { useT } from "@/i18n/client";
 import { canGrab, type Me } from "@/lib/rules";
 import { AvatarStack } from "./avatar";
@@ -23,6 +24,7 @@ export function TaskCard({
   draggable,
   overlay = false,
   isNew = false,
+  labelsById,
   onOpen,
   onGrab,
 }: {
@@ -32,6 +34,7 @@ export function TaskCard({
   draggable: boolean;
   overlay?: boolean;
   isNew?: boolean;
+  labelsById?: Map<string, TeamLabel>;
   onOpen?: () => void;
   onGrab?: () => void;
 }) {
@@ -66,6 +69,18 @@ export function TaskCard({
         >
           <span className="sr-only">{t("board.newForYou")}</span>
         </span>
+      )}
+      {labelsById && task.label_ids.length > 0 && (
+        <div className="mb-1.5 flex flex-wrap gap-1 pr-3">
+          {task.label_ids
+            .map((id) => labelsById.get(id))
+            .filter((l): l is TeamLabel => Boolean(l))
+            .map((l) => (
+              <span key={l.id} className={cn("rounded px-1.5 py-0.5 text-[11px] font-medium", CHIP[isColor(l.color) ? l.color : "gray"])}>
+                {l.name}
+              </span>
+            ))}
+        </div>
       )}
       {/* The title is a real button so keyboard users can open the task. */}
       <button

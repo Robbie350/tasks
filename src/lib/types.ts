@@ -29,7 +29,15 @@ export type Task = {
   created_at: string;
   assignee_ids: string[];
   notes_count: number;
+  label_ids: string[];
+  done_at: string | null;
 };
+
+/** Team label (shared by everyone, managed by managers). Same shape as personal labels. */
+export type TeamLabel = { id: string; name: string; color: string };
+
+/** Done tasks older than this disappear from the board until "Show archived". */
+export const ARCHIVE_AFTER_DAYS = 14;
 
 export type Note = {
   id: string;
