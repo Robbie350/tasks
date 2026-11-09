@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Select } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
-import type { Person, Task, TaskPriority, TeamLabel } from "@/lib/types";
+import type { BoardColumn, Person, Task, TaskPriority, TeamLabel } from "@/lib/types";
 import { CHIP, isColor } from "@/components/personal/palette";
 import { useT } from "@/i18n/client";
 import {
@@ -16,9 +16,10 @@ import {
   canGrab,
   canJoin,
   canLeave,
+  availableMoves,
   canReview,
+  columnOf,
   isAssignee,
-  nextStep,
   type Me,
 } from "@/lib/rules";
 import { rejectTask, setTaskLabels, updateTask } from "@/app/(app)/task-actions";
@@ -36,6 +37,7 @@ const PRIORITY_DOT = {
 } as const;
 
 export function TaskPanel({
+  columns,
   labels,
   task,
   people,
@@ -44,6 +46,7 @@ export function TaskPanel({
   startInRejectMode,
   onClose,
 }: {
+  columns: BoardColumn[];
   labels: TeamLabel[];
   task: Task | null;
   people: Map<string, Person>;
@@ -74,6 +77,7 @@ export function TaskPanel({
     >
       {task && (
         <PanelBody
+          columns={columns}
           labels={labels}
           key={task.id + String(startInRejectMode)}
           task={task}
@@ -89,6 +93,7 @@ export function TaskPanel({
 }
 
 function PanelBody({
+  columns,
   labels,
   task,
   people,
@@ -97,6 +102,7 @@ function PanelBody({
   startInRejectMode,
   close,
 }: {
+  columns: BoardColumn[];
   labels: TeamLabel[];
   task: Task;
   people: Map<string, Person>;
@@ -113,8 +119,14 @@ function PanelBody({
     .map((id) => people.get(id))
     .filter((p): p is Person => Boolean(p));
   const creator = people.get(task.created_by);
-  const next = nextStep(task, me);
   const onTask = isAssignee(task, me);
+  const colName = (c: BoardColumn) => c.title ?? t(`status.${c.stage}`);
+  const current = columnOf(task, columns);
+  const moves = availableMoves(task, me, columns);
+  // Assignee's forward move: next step, or the next stage from the last step.
+  const forward = moves.find((m) => (m.kind === "step" || m.kind === "stage") && !canReview(task, me));
+  const reviewStep = canReview(task, me) ? moves.find((m) => m.kind === "step") : undefined;
+  const approve = moves.find((m) => m.kind === "approve");
 
   return (
     <div className="flex h-full flex-col">
@@ -123,6 +135,7 @@ function PanelBody({
           <div className="flex flex-wrap items-center gap-2 text-xs">
             <span className="rounded-full bg-muted px-2 py-0.5 font-medium">
               {t(`status.${task.status}`)}
+              {current.title && ` · ${current.title}`}
             </span>
             <span className="inline-flex items-center gap-1.5 text-muted-foreground">
               <span className={cn("size-2 rounded-full", PRIORITY_DOT[task.priority])} />
@@ -242,19 +255,35 @@ function PanelBody({
             />
 
             {/* Workflow */}
-            {(next || canReview(task, me) || (task.status === "review" && me.role === "manager" && onTask)) && (
+            {(forward || canReview(task, me) || (task.status === "review" && me.role === "manager" && onTask)) && (
               <section className="space-y-3 rounded-lg border p-4">
-                {next && (
-                  <Button className="w-full" onClick={() => actions.move(task, next)}>
-                    {next === "in_progress" ? t("panel.start") : t("panel.submit")}
+                {forward && (
+                  <Button
+                    className="w-full"
+                    onClick={() =>
+                      forward.kind === "step" ? actions.step(task, forward.target) : forward.kind === "stage" && actions.move(task, forward.to)
+                    }
+                  >
+                    {forward.kind === "step"
+                      ? t("panel.nextStep", { column: colName(forward.target) })
+                      : forward.target.stage === "in_progress"
+                        ? t("panel.start", { column: colName(forward.target) })
+                        : t("panel.submit", { column: colName(forward.target) })}
                   </Button>
                 )}
 
                 {canReview(task, me) && mode === "view" && (
                   <div className="flex gap-2">
-                    <Button className="flex-1" onClick={() => actions.approve(task)}>
-                      {t("panel.approve")}
-                    </Button>
+                    {reviewStep && (
+                      <Button className="flex-1" onClick={() => actions.step(task, reviewStep.target)}>
+                        {t("panel.nextStep", { column: colName(reviewStep.target) })}
+                      </Button>
+                    )}
+                    {approve && (
+                      <Button className="flex-1" onClick={() => actions.approve(task)}>
+                        {t("panel.approve", { column: colName(approve.target) })}
+                      </Button>
+                    )}
                     <Button variant="outline" className="flex-1" onClick={() => setMode("reject")}>
                       {t("panel.reject")}
                     </Button>

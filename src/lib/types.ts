@@ -33,7 +33,22 @@ export type Task = {
   done_at: string | null;
   checklist: PCheckItem[];
   attachments_count: number;
+  /** Column (step) inside the task's stage; null = the stage's first column. */
+  column_id: string | null;
 };
+
+/** A board column: one of a stage's steps. Each stage has one built-in column. */
+export type BoardColumn = {
+  id: string;
+  stage: TaskStatus;
+  title: string | null; // null = use the stage's translated name
+  position: number;
+  is_builtin: boolean;
+};
+
+export const STAGE_ORDER: TaskStatus[] = ["unassigned", "todo", "in_progress", "review", "done"];
+/** Stages the admin can add steps to. */
+export const STEP_STAGES: TaskStatus[] = ["todo", "in_progress", "review"];
 
 export type Attachment = {
   id: string;

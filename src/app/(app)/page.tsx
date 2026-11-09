@@ -5,12 +5,13 @@ import { getBoardData } from "@/lib/board";
 
 export default async function BoardPage({ searchParams }: { searchParams: Promise<{ task?: string }> }) {
   const profile = await requireProfile();
-  const { tasks, people, unreadTaskIds, labels, archivedCount } = await getBoardData();
+  const { tasks, people, unreadTaskIds, labels, archivedCount, columns } = await getBoardData();
   const openTaskId = (await searchParams).task;
 
   return (
     <main className="p-4 sm:p-6">
       <Board
+        columns={columns}
         tasks={tasks}
         people={people}
         me={{ id: profile.id, role: profile.role }}

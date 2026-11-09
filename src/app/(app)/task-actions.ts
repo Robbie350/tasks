@@ -286,3 +286,28 @@ export async function getAttachmentUrl(id: string): Promise<{ ok: true; url: str
     return { ok: false, error: OFFLINE };
   }
 }
+
+// ---------------------------------------------------------------------------
+// Board columns / steps
+// ---------------------------------------------------------------------------
+
+export async function moveTaskStep(taskId: string, columnId: string) {
+  return call("move_task_step", { p_task_id: taskId, p_column_id: columnId });
+}
+
+export async function addBoardColumn(afterId: string, title: string) {
+  if (!title.trim()) return { ok: false, error: "A column name can have up to 40 characters." } as const;
+  return call("add_board_column", { p_after: afterId, p_title: title.trim().slice(0, 40) });
+}
+
+export async function renameBoardColumn(id: string, title: string | null) {
+  return call("rename_board_column", { p_id: id, p_title: title });
+}
+
+export async function moveBoardColumn(id: string, dir: -1 | 1) {
+  return call("move_board_column", { p_id: id, p_dir: dir });
+}
+
+export async function deleteBoardColumn(id: string) {
+  return call("delete_board_column", { p_id: id });
+}

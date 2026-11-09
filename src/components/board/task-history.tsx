@@ -50,8 +50,13 @@ function describe(a: Activity, people: Map<string, Person>, t: Translator["t"]) 
       return t("history.joined");
     case "left":
       return a.to_status === "unassigned" ? t("history.leftUnassigned") : t("history.left");
-    case "moved":
-      return t("history.moved", { column });
+    case "moved": {
+      // Moves between steps record the step's name; built-in steps store the stage key.
+      const step = typeof a.details.column === "string" ? a.details.column : null;
+      const known = ["unassigned", "todo", "in_progress", "review", "done"];
+      const name = step ? (known.includes(step) ? t(`status.${step as "todo"}`) : step) : column;
+      return t("history.moved", { column: name });
+    }
     case "approved":
       return t("history.approved");
     case "rejected":

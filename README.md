@@ -55,7 +55,7 @@ These refine the original spec and are what step 5 enforces in the database.
 | Reject (Review → In Progress) | a manager **not assigned** to the task | note required, assignees notified |
 | Reopen Done | nobody (v1) | create a new task instead |
 
-Admins manage users only: they can't create, be assigned to, move or approve tasks.
+Admins manage users and the board's columns: they can add **steps** inside To Do, In Progress and Review (e.g. In Progress → Design → Development), rename any column, and delete added steps. Built-in columns can't be deleted. Tasks move through steps one at a time; a task leaves a stage only from its last step, and is approved only from the last Review step. Admins can't create, be assigned to, move or approve tasks.
 
 ## Security rules
 

@@ -18,6 +18,7 @@ Each script is safe to run again.
 | `0010_checklists_attachments.sql` | E | task checklists, `task_attachments`, private `task-files` storage bucket (25 MB per file) |
 | `0011_reports_avatars.sql` | F | report functions (managers + admin), `set_my_avatar()`, public `avatars` bucket (2 MB) |
 | `0012_telegram.sql` | G | Telegram links, one-time link codes, notification sending queue |
+| `0013_board_columns.sql` | — | admin-managed steps inside To Do / In Progress / Review (`board_columns`) |
 
 ## Creating the first admin (once)
 

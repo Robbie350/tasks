@@ -2,6 +2,8 @@ import "server-only";
 import { createClient } from "@/lib/supabase/server";
 import {
   ARCHIVE_AFTER_DAYS,
+  STAGE_ORDER,
+  type BoardColumn,
   type Person,
   type Task,
   type TaskPriority,
@@ -9,7 +11,8 @@ import {
   type TeamLabel,
 } from "@/lib/types";
 
-type TaskRow = Omit<Task, "assignee_ids" | "notes_count" | "label_ids" | "done_at" | "checklist" | "attachments_count"> & {
+type TaskRow = Omit<Task, "assignee_ids" | "notes_count" | "label_ids" | "done_at" | "checklist" | "attachments_count" | "column_id"> & {
+  column_id?: string | null;
   task_assignees: { user_id: string }[];
   task_notes: { count: number }[];
   task_attachments?: { count: number }[];
@@ -19,7 +22,7 @@ type TaskRow = Omit<Task, "assignee_ids" | "notes_count" | "label_ids" | "done_a
 };
 
 const TASK_COLUMNS =
-  "id, title, description, status, priority, due_date, position, created_by, created_at, label_ids, done_at, checklist, task_assignees(user_id), task_notes(count), task_attachments(count)";
+  "id, title, description, status, priority, due_date, position, created_by, created_at, label_ids, done_at, checklist, column_id, task_assignees(user_id), task_notes(count), task_attachments(count)";
 
 export function toTask({ task_assignees, task_notes, task_attachments, ...t }: TaskRow): Task {
   return {
@@ -32,6 +35,7 @@ export function toTask({ task_assignees, task_notes, task_attachments, ...t }: T
     done_at: t.done_at ?? null,
     checklist: Array.isArray(t.checklist) ? t.checklist : [],
     attachments_count: task_attachments?.[0]?.count ?? 0,
+    column_id: t.column_id ?? null,
   };
 }
 
@@ -46,11 +50,12 @@ export async function getBoardData(): Promise<{
   labels: TeamLabel[];
   unreadTaskIds: string[];
   archivedCount: number;
+  columns: BoardColumn[];
 }> {
   const supabase = await createClient();
   const cutoff = archiveCutoff();
 
-  const [tasksRes, peopleRes, unreadRes, labelsRes, archivedRes] = await Promise.all([
+  const [tasksRes, peopleRes, unreadRes, labelsRes, archivedRes, columnsRes] = await Promise.all([
     supabase
       .from("tasks")
       .select(TASK_COLUMNS)
@@ -71,6 +76,7 @@ export async function getBoardData(): Promise<{
       .select("id", { count: "exact", head: true })
       .eq("status", "done")
       .lt("done_at", cutoff),
+    supabase.from("board_columns").select("id, stage, title, position, is_builtin").returns<BoardColumn[]>(),
   ]);
 
   if (tasksRes.error) throw new Error(`Couldn't load tasks: ${tasksRes.error.message}`);
@@ -84,7 +90,19 @@ export async function getBoardData(): Promise<{
     labels: labelsRes.error ? [] : (labelsRes.data ?? []),
     unreadTaskIds,
     archivedCount: archivedRes.count ?? 0,
+    columns: sortColumns(
+      columnsRes.error || !columnsRes.data?.length
+        ? // Before the columns script runs: one built-in column per stage.
+          STAGE_ORDER.map((stage) => ({ id: `builtin-${stage}`, stage, title: null, position: 0, is_builtin: true }))
+        : columnsRes.data
+    ),
   };
+}
+
+export function sortColumns(columns: BoardColumn[]) {
+  return [...columns].sort(
+    (a, b) => STAGE_ORDER.indexOf(a.stage) - STAGE_ORDER.indexOf(b.stage) || a.position - b.position
+  );
 }
 
 /** Done tasks older than the archive cutoff, newest first. */
