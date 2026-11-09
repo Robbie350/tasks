@@ -29,6 +29,8 @@ export function RealtimeRefresher({ userId }: { userId: string }) {
       .on("postgres_changes", { event: "*", schema: "public", table: "tasks" }, refresh)
       .on("postgres_changes", { event: "*", schema: "public", table: "task_assignees" }, refresh)
       .on("postgres_changes", { event: "*", schema: "public", table: "task_notes" }, refresh)
+      .on("postgres_changes", { event: "*", schema: "public", table: "task_attachments" }, refresh)
+      .on("postgres_changes", { event: "*", schema: "public", table: "task_labels" }, refresh)
       .on(
         "postgres_changes",
         { event: "*", schema: "public", table: "notifications", filter: `user_id=eq.${userId}` },

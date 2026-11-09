@@ -26,7 +26,7 @@ export function DueDate({ date, done }: { date: string; done: boolean }) {
   return (
     <span
       className={cn(
-        "inline-flex items-center gap-1 text-xs",
+        "inline-flex items-center gap-1 text-xs whitespace-nowrap",
         overdue ? "font-medium text-red-600 dark:text-red-400" : "text-muted-foreground"
       )}
       title={overdue ? t("board.overdue") : t("board.dueDate")}

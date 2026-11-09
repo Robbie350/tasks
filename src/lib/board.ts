@@ -9,17 +9,19 @@ import {
   type TeamLabel,
 } from "@/lib/types";
 
-type TaskRow = Omit<Task, "assignee_ids" | "notes_count" | "label_ids" | "done_at"> & {
+type TaskRow = Omit<Task, "assignee_ids" | "notes_count" | "label_ids" | "done_at" | "checklist" | "attachments_count"> & {
   task_assignees: { user_id: string }[];
   task_notes: { count: number }[];
+  task_attachments?: { count: number }[];
+  checklist?: Task["checklist"] | null;
   label_ids?: string[] | null;
   done_at?: string | null;
 };
 
 const TASK_COLUMNS =
-  "id, title, description, status, priority, due_date, position, created_by, created_at, label_ids, done_at, task_assignees(user_id), task_notes(count)";
+  "id, title, description, status, priority, due_date, position, created_by, created_at, label_ids, done_at, checklist, task_assignees(user_id), task_notes(count), task_attachments(count)";
 
-export function toTask({ task_assignees, task_notes, ...t }: TaskRow): Task {
+export function toTask({ task_assignees, task_notes, task_attachments, ...t }: TaskRow): Task {
   return {
     ...t,
     status: t.status as TaskStatus,
@@ -28,6 +30,8 @@ export function toTask({ task_assignees, task_notes, ...t }: TaskRow): Task {
     notes_count: task_notes[0]?.count ?? 0,
     label_ids: t.label_ids ?? [],
     done_at: t.done_at ?? null,
+    checklist: Array.isArray(t.checklist) ? t.checklist : [],
+    attachments_count: task_attachments?.[0]?.count ?? 0,
   };
 }
 

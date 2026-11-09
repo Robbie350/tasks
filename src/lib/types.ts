@@ -31,7 +31,22 @@ export type Task = {
   notes_count: number;
   label_ids: string[];
   done_at: string | null;
+  checklist: PCheckItem[];
+  attachments_count: number;
 };
+
+export type Attachment = {
+  id: string;
+  task_id: string;
+  uploaded_by: string;
+  file_name: string;
+  size_bytes: number;
+  mime_type: string | null;
+  created_at: string;
+};
+
+/** Largest file people can attach to a task (matches the storage bucket limit). */
+export const MAX_ATTACHMENT_BYTES = 25 * 1024 * 1024;
 
 /** Team label (shared by everyone, managed by managers). Same shape as personal labels. */
 export type TeamLabel = { id: string; name: string; color: string };
@@ -58,7 +73,9 @@ export type ActivityAction =
   | "moved"
   | "approved"
   | "rejected"
-  | "edited";
+  | "edited"
+  | "attached"
+  | "detached";
 
 export type Activity = {
   id: number;

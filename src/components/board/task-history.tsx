@@ -4,11 +4,20 @@ import { useCallback, useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
-import type { Activity, Note, Person, Task } from "@/lib/types";
+import { MAX_ATTACHMENT_BYTES, type Activity, type Attachment, type Note, type Person, type Task } from "@/lib/types";
 import { useT } from "@/i18n/client";
 import type { Translator } from "@/i18n";
 import type { Me } from "@/lib/rules";
-import { addNote, deleteNote, editNote, getTaskDetails } from "@/app/(app)/task-actions";
+import {
+  addNote,
+  deleteAttachment,
+  deleteNote,
+  editNote,
+  getAttachmentUrl,
+  getTaskDetails,
+  uploadAttachment,
+} from "@/app/(app)/task-actions";
+import { Download, FileText, Paperclip, Trash2 } from "lucide-react";
 import { timeAgo } from "@/lib/time";
 import type { BoardActions } from "./board";
 import { Avatar } from "./avatar";
@@ -47,11 +56,15 @@ function describe(a: Activity, people: Map<string, Person>, t: Translator["t"]) 
       return t("history.approved");
     case "rejected":
       return t("history.rejected");
+    case "attached":
+      return t("history.attached", { file: String(a.details.file ?? "") });
+    case "detached":
+      return t("history.detached", { file: String(a.details.file ?? "") });
     case "edited": {
       const fields = Array.isArray(a.details.fields) ? (a.details.fields as string[]) : [];
       const label = (f: string) =>
         f === "due date" ? t("history.fields.dueDate")
-        : f === "title" || f === "description" || f === "priority" || f === "labels" ? t(`history.fields.${f}`)
+        : f === "title" || f === "description" || f === "priority" || f === "labels" || f === "checklist" ? t(`history.fields.${f}`)
         : f;
       return fields.length
         ? t("history.editedFields", { fields: fields.map(label).join(", ") })
@@ -76,7 +89,8 @@ export function TaskHistory({
   actions: BoardActions;
 }) {
   const { t, tr } = useT();
-  const [tab, setTab] = useState<"notes" | "activity">("notes");
+  const [tab, setTab] = useState<"notes" | "files" | "activity">("notes");
+  const [files, setFiles] = useState<Attachment[] | null>(null);
   const [notes, setNotes] = useState<Note[] | null>(null);
   const [activity, setActivity] = useState<Activity[] | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
@@ -86,6 +100,7 @@ export function TaskHistory({
     if (res.ok) {
       setNotes(res.notes);
       setActivity(res.activity);
+      setFiles(res.attachments);
       setLoadError(null);
     } else {
       setLoadError(tr(res.error));
@@ -93,7 +108,7 @@ export function TaskHistory({
   }, [task.id, tr]);
 
   // Reload when the task changes (moved, joined, edited, new note...).
-  const version = [task.status, task.assignee_ids.join(), task.notes_count, task.title, task.priority, task.due_date, task.description].join("|");
+  const version = [task.status, task.assignee_ids.join(), task.notes_count, task.attachments_count, JSON.stringify(task.checklist), task.label_ids.join(), task.title, task.priority, task.due_date, task.description].join("|");
   useEffect(() => {
     load();
   }, [load, version]);
@@ -103,7 +118,7 @@ export function TaskHistory({
   return (
     <section className="space-y-3">
       <div role="tablist" aria-label={t("history.tabsLabel")} className="flex gap-1 border-b">
-        {(["notes", "activity"] as const).map((tabName) => (
+        {(["notes", "files", "activity"] as const).map((tabName) => (
           <button
             key={tabName}
             role="tab"
@@ -118,7 +133,9 @@ export function TaskHistory({
           >
             {tabName === "notes"
               ? notes ? t("history.notesCount", { n: notes.length }) : t("history.notes")
-              : t("history.activity")}
+              : tabName === "files"
+                ? files ? t("history.filesCount", { n: files.length }) : t("history.files")
+                : t("history.activity")}
           </button>
         ))}
       </div>
@@ -135,6 +152,10 @@ export function TaskHistory({
             ))}
           </ul>
           {canWrite && <NoteComposer taskId={task.id} actions={actions} />}
+        </div>
+      ) : tab === "files" ? (
+        <div role="tabpanel">
+          <FilesTab task={task} files={files} people={people} me={me} actions={actions} canWrite={canWrite} />
         </div>
       ) : (
         <div role="tabpanel">
@@ -295,5 +316,106 @@ function NoteComposer({ taskId, actions }: { taskId: string; actions: BoardActio
         </Button>
       </div>
     </form>
+  );
+}
+
+function formatBytes(n: number) {
+  if (n < 1024) return `${n} B`;
+  if (n < 1024 * 1024) return `${(n / 1024).toFixed(n < 10 * 1024 ? 1 : 0)} KB`;
+  return `${(n / 1024 / 1024).toFixed(1)} MB`;
+}
+
+function FilesTab({
+  task,
+  files,
+  people,
+  me,
+  actions,
+  canWrite,
+}: {
+  task: Task;
+  files: Attachment[] | null;
+  people: Map<string, Person>;
+  me: Me;
+  actions: BoardActions;
+  canWrite: boolean;
+}) {
+  const { t } = useT();
+  const [busy, setBusy] = useState(false);
+  const canUpload = canWrite && task.status !== "done";
+
+  async function open(f: Attachment) {
+    const res = await getAttachmentUrl(f.id);
+    if (res.ok) window.location.href = res.url;
+    else actions.run(async () => res);
+  }
+
+  return (
+    <div className="space-y-3">
+      {files === null && <p className="text-sm text-muted-foreground">{t("common.loading")}</p>}
+      {files?.length === 0 && <p className="text-sm text-muted-foreground">{t("history.noFiles")}</p>}
+      <ul className="space-y-2">
+        {files?.map((f) => {
+          const who = people.get(f.uploaded_by);
+          const mayRemove = f.uploaded_by === me.id || me.role === "manager";
+          return (
+            <li key={f.id} className="flex items-center gap-3 rounded-lg border bg-background p-2.5">
+              <FileText className="size-5 shrink-0 text-muted-foreground" aria-hidden />
+              <div className="min-w-0 flex-1">
+                <button onClick={() => open(f)} className="block max-w-full truncate text-left text-sm font-medium hover:underline" title={f.file_name}>
+                  {f.file_name}
+                </button>
+                <p className="truncate text-xs text-muted-foreground">
+                  {formatBytes(f.size_bytes)} · {who?.full_name ?? t("common.someone")} · <Time iso={f.created_at} />
+                </p>
+              </div>
+              <Button variant="ghost" size="icon" className="size-8 shrink-0" aria-label={t("history.download")} onClick={() => open(f)}>
+                <Download />
+              </Button>
+              {mayRemove && task.status !== "done" && (
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="size-8 shrink-0 text-muted-foreground hover:text-destructive"
+                  aria-label={t("history.removeFile")}
+                  onClick={() => confirm(t("history.removeFileConfirm", { name: f.file_name })) && actions.run(() => deleteAttachment(f.id))}
+                >
+                  <Trash2 />
+                </Button>
+              )}
+            </li>
+          );
+        })}
+      </ul>
+      {canUpload && (
+        <div className="space-y-1">
+          <label className={cn("inline-flex cursor-pointer items-center gap-2 rounded-md border px-3 py-1.5 text-sm font-medium hover:bg-muted", busy && "pointer-events-none opacity-60")}>
+            <Paperclip className="size-4" aria-hidden />
+            {busy ? t("history.uploading") : t("history.upload")}
+            <input
+              type="file"
+              className="sr-only"
+              disabled={busy}
+              onChange={async (e) => {
+                const file = e.target.files?.[0];
+                e.target.value = "";
+                if (!file) return;
+                if (file.size > MAX_ATTACHMENT_BYTES) {
+                  actions.run(async () => ({ ok: false, error: "Files can be up to 25 MB." }));
+                  return;
+                }
+                const fd = new FormData();
+                fd.set("taskId", task.id);
+                fd.set("file", file);
+                setBusy(true);
+                await actions.run(() => uploadAttachment(fd));
+                setBusy(false);
+              }}
+            />
+          </label>
+          <p className="text-xs text-muted-foreground">{t("history.maxSize")}</p>
+        </div>
+      )}
+    </div>
   );
 }

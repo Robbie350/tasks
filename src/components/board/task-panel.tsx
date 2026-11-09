@@ -26,6 +26,7 @@ import type { BoardActions } from "./board";
 import { Avatar } from "./avatar";
 import { DueDate } from "./due-date";
 import { TaskHistory } from "./task-history";
+import { TaskChecklist } from "./task-checklist";
 
 
 const PRIORITY_DOT = {
@@ -233,6 +234,12 @@ function PanelBody({
                 </ul>
               )}
             </section>
+
+            <TaskChecklist
+              task={task}
+              editable={task.status !== "done" && (me.role === "manager" || (me.role === "specialist" && onTask))}
+              actions={actions}
+            />
 
             {/* Workflow */}
             {(next || canReview(task, me) || (task.status === "review" && me.role === "manager" && onTask)) && (

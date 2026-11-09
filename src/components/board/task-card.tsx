@@ -1,7 +1,7 @@
 "use client";
 
 import { useDraggable } from "@dnd-kit/core";
-import { MessageSquare } from "lucide-react";
+import { CheckSquare, MessageSquare, Paperclip } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import type { Person, Task, TeamLabel } from "@/lib/types";
@@ -95,10 +95,29 @@ export function TaskCard({
       </button>
       <span className="sr-only">{t("priority.label", { priority: t(`priority.${task.priority}`) })}</span>
 
-      {(assignees.length > 0 || task.due_date || task.notes_count > 0) && (
-        <div className="mt-3 flex items-center justify-between gap-2">
+      {(assignees.length > 0 || task.due_date || task.notes_count > 0 || task.checklist.length > 0 || task.attachments_count > 0) && (
+        <div className="mt-3 flex flex-wrap items-center justify-between gap-x-2 gap-y-1.5">
           {assignees.length > 0 ? <AvatarStack people={assignees} /> : <span />}
-          <div className="flex items-center gap-3">
+          <div className="ml-auto flex flex-wrap items-center justify-end gap-x-2.5 gap-y-1">
+            {task.checklist.length > 0 && (
+              <span
+                className={cn(
+                  "inline-flex items-center gap-1 text-xs text-muted-foreground",
+                  task.checklist.every((i) => i.done) && "text-green-700 dark:text-green-400"
+                )}
+                title={t("panel.checklist")}
+              >
+                <CheckSquare className="size-3.5" aria-hidden />
+                {task.checklist.filter((i) => i.done).length}/{task.checklist.length}
+              </span>
+            )}
+            {task.attachments_count > 0 && (
+              <span className="inline-flex items-center gap-1 text-xs text-muted-foreground" title={tn("board.attachments", task.attachments_count)}>
+                <Paperclip className="size-3.5" aria-hidden />
+                <span aria-hidden>{task.attachments_count}</span>
+                <span className="sr-only">{tn("board.attachments", task.attachments_count)}</span>
+              </span>
+            )}
             {task.notes_count > 0 && (
               <span
                 className="inline-flex items-center gap-1 text-xs text-muted-foreground"

@@ -3,7 +3,17 @@
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { getArchivedTasks } from "@/lib/board";
-import type { Activity, Note, Task, TaskPriority, TaskStatus } from "@/lib/types";
+import { createAdminClient } from "@/lib/supabase/admin";
+import {
+  MAX_ATTACHMENT_BYTES,
+  type Activity,
+  type Attachment,
+  type Note,
+  type PCheckItem,
+  type Task,
+  type TaskPriority,
+  type TaskStatus,
+} from "@/lib/types";
 
 // Thin wrappers around the database functions. Each runs with the signed-in
 // user's session, and the database checks whether they're allowed.
@@ -67,14 +77,14 @@ export async function updateTask(
 // ---------------------------------------------------------------------------
 
 export type TaskDetails =
-  | { ok: true; notes: Note[]; activity: Activity[] }
+  | { ok: true; notes: Note[]; activity: Activity[]; attachments: Attachment[] }
   | { ok: false; error: string };
 
 /** Notes (oldest first) and activity (newest first) for the task panel. */
 export async function getTaskDetails(taskId: string): Promise<TaskDetails> {
   try {
     const supabase = await createClient();
-    const [notes, activity] = await Promise.all([
+    const [notes, activity, attachments] = await Promise.all([
       supabase
         .from("task_notes")
         .select("id, task_id, author_id, body, is_rejection, created_at, updated_at")
@@ -87,10 +97,22 @@ export async function getTaskDetails(taskId: string): Promise<TaskDetails> {
         .eq("task_id", taskId)
         .order("id", { ascending: false })
         .returns<Activity[]>(),
+      supabase
+        .from("task_attachments")
+        .select("id, task_id, uploaded_by, file_name, size_bytes, mime_type, created_at")
+        .eq("task_id", taskId)
+        .order("created_at")
+        .returns<Attachment[]>(),
     ]);
     if (notes.error) return { ok: false, error: notes.error.message };
     if (activity.error) return { ok: false, error: activity.error.message };
-    return { ok: true, notes: notes.data ?? [], activity: activity.data ?? [] };
+    return {
+      ok: true,
+      notes: notes.data ?? [],
+      activity: activity.data ?? [],
+      // Before the Phase E script runs this table doesn't exist; show no files.
+      attachments: attachments.error ? [] : (attachments.data ?? []),
+    };
   } catch (e) {
     console.error("getTaskDetails failed", e);
     return { ok: false, error: "Couldn't load notes and activity." };
@@ -161,4 +183,102 @@ export async function updateTeamLabel(id: string, patch: { name?: string; color?
 
 export async function deleteTeamLabel(id: string) {
   return labelWrite((s) => s.from("task_labels").delete().eq("id", id));
+}
+
+// ---------------------------------------------------------------------------
+// Checklists and attachments (Phase E)
+// ---------------------------------------------------------------------------
+
+export async function setTaskChecklist(taskId: string, checklist: PCheckItem[]) {
+  return call("set_task_checklist", { p_task_id: taskId, p_checklist: checklist });
+}
+
+const BUCKET = "task-files";
+const OFFLINE = "Couldn't reach the server. Check your connection and try again.";
+
+/** Storage keys allow only simple characters; the real name is kept in the table. */
+function storageSafe(name: string) {
+  const dot = name.lastIndexOf(".");
+  const ext = dot > 0 ? name.slice(dot + 1).replace(/[^A-Za-z0-9]/g, "").slice(0, 10) : "";
+  const base = (dot > 0 ? name.slice(0, dot) : name).replace(/[^A-Za-z0-9._-]+/g, "_").slice(0, 80) || "file";
+  return ext ? `${base}.${ext}` : base;
+}
+
+export async function uploadAttachment(formData: FormData): Promise<ActionResult> {
+  const taskId = String(formData.get("taskId") ?? "");
+  const file = formData.get("file");
+  if (!(file instanceof File) || file.size === 0) return { ok: false, error: "Choose a file." };
+  if (file.size > MAX_ATTACHMENT_BYTES) return { ok: false, error: "Files can be up to 25 MB." };
+
+  try {
+    const supabase = await createClient();
+    // Permission check first, with the user's own session.
+    const { error: denied } = await supabase.rpc("can_attach", { p_task_id: taskId });
+    if (denied) return { ok: false, error: denied.message };
+
+    const path = `${taskId}/${crypto.randomUUID()}-${storageSafe(file.name)}`;
+    const admin = createAdminClient();
+    const { error: upErr } = await admin.storage.from(BUCKET).upload(path, file, {
+      contentType: file.type || "application/octet-stream",
+      upsert: false,
+    });
+    if (upErr) {
+      console.error("upload failed", upErr);
+      return { ok: false, error: "Couldn't upload the file. Try again." };
+    }
+
+    const { error } = await supabase.rpc("add_attachment", {
+      p_task_id: taskId,
+      p_path: path,
+      p_file_name: file.name.slice(0, 200),
+      p_size: file.size,
+      p_mime: file.type || null,
+    });
+    if (error) {
+      await admin.storage.from(BUCKET).remove([path]); // don't leave an orphan file
+      return { ok: false, error: error.message };
+    }
+  } catch (e) {
+    console.error("uploadAttachment failed", e);
+    return { ok: false, error: OFFLINE };
+  }
+  revalidatePath("/");
+  return { ok: true };
+}
+
+export async function deleteAttachment(id: string): Promise<ActionResult> {
+  try {
+    const supabase = await createClient();
+    const { data: path, error } = await supabase.rpc("remove_attachment", { p_id: id });
+    if (error) return { ok: false, error: error.message };
+    if (typeof path === "string") await createAdminClient().storage.from(BUCKET).remove([path]);
+  } catch (e) {
+    console.error("deleteAttachment failed", e);
+    return { ok: false, error: OFFLINE };
+  }
+  revalidatePath("/");
+  return { ok: true };
+}
+
+/** A download link valid for one minute, for signed-in active users only. */
+export async function getAttachmentUrl(id: string): Promise<{ ok: true; url: string } | { ok: false; error: string }> {
+  try {
+    const supabase = await createClient();
+    // RLS: only active users can see the row (and so learn the path).
+    const { data, error } = await supabase
+      .from("task_attachments")
+      .select("path, file_name")
+      .eq("id", id)
+      .maybeSingle<{ path: string; file_name: string }>();
+    if (error || !data) return { ok: false, error: "That file no longer exists." };
+
+    const { data: signed, error: signErr } = await createAdminClient()
+      .storage.from(BUCKET)
+      .createSignedUrl(data.path, 60, { download: data.file_name });
+    if (signErr || !signed) return { ok: false, error: "Couldn't open the file." };
+    return { ok: true, url: signed.signedUrl };
+  } catch (e) {
+    console.error("getAttachmentUrl failed", e);
+    return { ok: false, error: OFFLINE };
+  }
 }

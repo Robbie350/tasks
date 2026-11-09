@@ -15,6 +15,7 @@ Each script is safe to run again.
 | `0007_preferences.sql` | A | theme / accent / language on profiles, `update_my_profile()` |
 | `0008_personal_board.sql` | C | personal columns, cards, labels, settings (owner-only RLS) |
 | `0009_archive_and_labels.sql` | D | `done_at` for archiving, team labels (`task_labels`, `set_task_labels()`) |
+| `0010_checklists_attachments.sql` | E | task checklists, `task_attachments`, private `task-files` storage bucket (25 MB per file) |
 
 ## Creating the first admin (once)
 

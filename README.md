@@ -79,6 +79,6 @@ Admins manage users only: they can't create, be assigned to, move or approve tas
 - [x] B: Languages (English, Russian, Uzbek)
 - [x] C: Personal board
 - [x] D: Phone layout, archive Done, search and labels
-- [ ] E: Checklists and attachments on team tasks
+- [x] E: Checklists and attachments on team tasks
 - [ ] F: Reports
 - [ ] G: Telegram / email notifications
