@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import {
   DndContext,
   DragOverlay,
@@ -362,8 +363,8 @@ export function PersonalBoard({ initial }: { initial: PersonalBoardData }) {
   const activeColumn = active?.type === "column" ? columns.find((c) => c.id === active.id) : null;
 
   return (
-    <div className={cn("min-h-[calc(100dvh-53px)] sm:min-h-[calc(100dvh-61px)]", BOARD_BG[background])}>
-      <main className="p-4 sm:p-6">
+    <div className={cn("flex h-[calc(100dvh-53px)] flex-col sm:h-[calc(100dvh-61px)]", BOARD_BG[background])}>
+      <main className="flex min-h-0 flex-1 flex-col p-4 pb-0 sm:p-6 sm:pb-0">
         {/* Toolbar */}
         <div className="mb-4 flex flex-wrap items-center gap-3">
           <div className="mr-2">
@@ -417,7 +418,7 @@ export function PersonalBoard({ initial }: { initial: PersonalBoardData }) {
           }}
         >
           <SortableContext items={columns.map((c) => COL + c.id)} strategy={horizontalListSortingStrategy}>
-            <div className="-mx-4 flex snap-x snap-mandatory items-start gap-4 overflow-x-auto px-4 pb-6 sm:mx-0 sm:snap-none sm:px-0">
+            <div className="-mx-4 flex min-h-0 flex-1 snap-x snap-mandatory items-start gap-4 overflow-x-auto overflow-y-hidden px-4 pb-4 sm:mx-0 sm:snap-none sm:px-0">
               {columns.map((c, i) => (
                 <ColumnView
                   key={c.id}
@@ -504,16 +505,35 @@ function ColumnView({
   const [draft, setDraft] = useState("");
   const color = col(column.color);
   const menuRef = useRef<HTMLDivElement>(null);
+  const popupRef = useRef<HTMLDivElement>(null);
+  const [menuPos, setMenuPos] = useState<{ top: number; left: number } | null>(null);
+
+  function toggleMenu(button: HTMLElement) {
+    if (menu) return setMenu(false);
+    const r = button.getBoundingClientRect();
+    const width = 208; // w-52
+    setMenuPos({
+      top: r.bottom + 4,
+      left: Math.max(8, Math.min(r.right - width, window.innerWidth - width - 8)),
+    });
+    setMenu(true);
+  }
 
   useEffect(() => {
     if (!menu) return;
-    const close = (e: PointerEvent) => !menuRef.current?.contains(e.target as Node) && setMenu(false);
+    const inside = (n: Node) => menuRef.current?.contains(n) || popupRef.current?.contains(n);
+    const close = (e: PointerEvent) => !inside(e.target as Node) && setMenu(false);
     const esc = (e: KeyboardEvent) => e.key === "Escape" && setMenu(false);
+    const hide = () => setMenu(false); // the menu is pinned to the screen, so close it on scroll/resize
     document.addEventListener("pointerdown", close);
     document.addEventListener("keydown", esc);
+    window.addEventListener("resize", hide);
+    document.addEventListener("scroll", hide, true);
     return () => {
       document.removeEventListener("pointerdown", close);
       document.removeEventListener("keydown", esc);
+      window.removeEventListener("resize", hide);
+      document.removeEventListener("scroll", hide, true);
     };
   }, [menu]);
 
@@ -535,7 +555,7 @@ function ColumnView({
       style={{ transform: CSS.Translate.toString(transform), transition }}
       aria-label={column.title}
       className={cn(
-        "flex w-[85vw] shrink-0 snap-center flex-col rounded-xl border-t-4 p-3 sm:w-72",
+        "flex max-h-full w-[85vw] shrink-0 snap-center flex-col rounded-xl border-t-4 p-3 sm:w-72",
         COLUMN_BG[color],
         COLUMN_TOP[color],
         isDragging && "opacity-40"
@@ -580,12 +600,17 @@ function ColumnView({
             className="size-7"
             aria-label={t("personal.columnMenu")}
             aria-expanded={menu}
-            onClick={() => setMenu((m) => !m)}
+            onClick={(e) => toggleMenu(e.currentTarget)}
           >
             <MoreHorizontal />
           </Button>
-          {menu && (
-            <div className="absolute right-0 z-30 mt-1 w-52 space-y-1 rounded-lg border bg-popover p-2 text-popover-foreground shadow-lg">
+          {menu && menuPos && createPortal(
+            <div
+              ref={popupRef}
+              role="menu"
+              style={{ top: menuPos.top, left: menuPos.left }}
+              className="fixed z-50 w-52 space-y-1 rounded-lg border bg-popover p-2 text-popover-foreground shadow-lg"
+            >
               <MenuButton onClick={() => { setMenu(false); setRenaming(true); }}>{t("personal.rename")}</MenuButton>
               <p className="px-2 pt-1 text-xs text-muted-foreground">{t("personal.colour")}</p>
               <div className="flex flex-wrap gap-1.5 px-2 pb-1">
@@ -609,13 +634,14 @@ function ColumnView({
               <MenuButton danger onClick={() => { setMenu(false); onDelete(); }}>
                 <Trash2 className="size-4" /> {t("personal.deleteColumn")}
               </MenuButton>
-            </div>
+            </div>,
+            document.body
           )}
         </div>
       </header>
 
       <SortableContext items={cards.map((k) => k.id)} strategy={verticalListSortingStrategy}>
-        <div className="flex min-h-12 flex-col gap-2">
+        <div className="-mx-1 flex min-h-12 flex-col gap-2 overflow-y-auto px-1 pb-1">
           {cards.map((k) => (
             <SortableCard key={k.id} card={k} labelById={labelById} onOpen={() => onOpenCard(k.id)} />
           ))}
