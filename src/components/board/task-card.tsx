@@ -91,6 +91,7 @@ export function TaskCard({
         }}
         className="pr-3 text-left text-sm leading-snug font-medium break-words outline-none focus-visible:underline"
       >
+        {task.number != null && <span className="mr-1 font-normal text-muted-foreground tabular-nums">#{task.number}</span>}
         {task.title}
       </button>
       <span className="sr-only">{t("priority.label", { priority: t(`priority.${task.priority}`) })}</span>

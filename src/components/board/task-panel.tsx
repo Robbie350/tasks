@@ -133,6 +133,7 @@ function PanelBody({
       <header className="flex items-start justify-between gap-3 border-b p-5">
         <div className="min-w-0 space-y-2">
           <div className="flex flex-wrap items-center gap-2 text-xs">
+            {task.number != null && <span className="font-medium text-muted-foreground tabular-nums">#{task.number}</span>}
             <span className="rounded-full bg-muted px-2 py-0.5 font-medium">
               {t(`status.${task.status}`)}
               {current.title && ` · ${current.title}`}

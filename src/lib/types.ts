@@ -19,6 +19,8 @@ export type TaskPriority = "low" | "medium" | "high";
 
 export type Task = {
   id: string;
+  /** Permanent task number, shown as #12. Null only before the numbers script runs. */
+  number: number | null;
   title: string;
   description: string | null;
   status: TaskStatus;

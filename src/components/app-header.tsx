@@ -21,6 +21,7 @@ export async function AppHeader({ profile }: { profile: Profile }) {
         <nav className="flex min-w-0 items-center gap-1 overflow-x-auto text-sm whitespace-nowrap">
           <NavLink href="/">{t("nav.board")}</NavLink>
           <NavLink href="/me">{t("nav.myBoard")}</NavLink>
+          <NavLink href="/archive">{t("nav.archive")}</NavLink>
           {profile.role !== "specialist" && <NavLink href="/reports">{t("nav.reports")}</NavLink>}
           {profile.role === "admin" && <NavLink href="/admin/users">{t("nav.users")}</NavLink>}
         </nav>

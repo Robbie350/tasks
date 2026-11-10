@@ -11,8 +11,9 @@ import {
   type TeamLabel,
 } from "@/lib/types";
 
-type TaskRow = Omit<Task, "assignee_ids" | "notes_count" | "label_ids" | "done_at" | "checklist" | "attachments_count" | "column_id"> & {
+type TaskRow = Omit<Task, "number" | "assignee_ids" | "notes_count" | "label_ids" | "done_at" | "checklist" | "attachments_count" | "column_id"> & {
   column_id?: string | null;
+  number?: number | null;
   task_assignees: { user_id: string }[];
   task_notes: { count: number }[];
   task_attachments?: { count: number }[];
@@ -21,8 +22,8 @@ type TaskRow = Omit<Task, "assignee_ids" | "notes_count" | "label_ids" | "done_a
   done_at?: string | null;
 };
 
-const TASK_COLUMNS =
-  "id, title, description, status, priority, due_date, position, created_by, created_at, label_ids, done_at, checklist, column_id, task_assignees(user_id), task_notes(count), task_attachments(count)";
+export const TASK_COLUMNS =
+  "id, number, title, description, status, priority, due_date, position, created_by, created_at, label_ids, done_at, checklist, column_id, task_assignees(user_id), task_notes(count), task_attachments(count)";
 
 export function toTask({ task_assignees, task_notes, task_attachments, ...t }: TaskRow): Task {
   return {
@@ -36,6 +37,7 @@ export function toTask({ task_assignees, task_notes, task_attachments, ...t }: T
     checklist: Array.isArray(t.checklist) ? t.checklist : [],
     attachments_count: task_attachments?.[0]?.count ?? 0,
     column_id: t.column_id ?? null,
+    number: t.number ?? null,
   };
 }
 

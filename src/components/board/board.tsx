@@ -236,6 +236,7 @@ export function Board({
     (!filter || task.status === "unassigned" || task.assignee_ids.includes(filter)) &&
     (!labelFilter || task.label_ids.includes(labelFilter)) &&
     (!q ||
+      (/^#?\d+$/.test(q) && String(task.number) === q.replace("#", "")) ||
       task.title.toLowerCase().includes(q) ||
       (task.description ?? "").toLowerCase().includes(q) ||
       task.label_ids.some((id) => labelsById.get(id)?.name.toLowerCase().includes(q)));
@@ -340,6 +341,16 @@ export function Board({
         )}
         <div className="ml-auto">{toolbarEnd}</div>
       </div>
+      {q && (
+        <p className="-mt-2 mb-3 text-xs">
+          <a
+            href={`/archive?scope=all&q=${encodeURIComponent(query.trim())}`}
+            className="text-muted-foreground underline-offset-4 hover:text-foreground hover:underline"
+          >
+            {t("board.searchArchive", { q: query.trim() })}
+          </a>
+        </p>
+      )}
 
       {/* Phones: jump to a column (columns swipe sideways one at a time). */}
       <div className="-mx-4 mb-3 flex gap-1.5 overflow-x-auto px-4 sm:hidden" role="navigation" aria-label={t("board.title")}>

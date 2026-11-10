@@ -19,6 +19,7 @@ Each script is safe to run again.
 | `0011_reports_avatars.sql` | F | report functions (managers + admin), `set_my_avatar()`, public `avatars` bucket (2 MB) |
 | `0012_telegram.sql` | G | Telegram links, one-time link codes, notification sending queue |
 | `0013_board_columns.sql` | — | admin-managed steps inside To Do / In Progress / Review (`board_columns`) |
+| `0014_task_numbers.sql` | — | permanent task numbers (#1, #2, …), existing tasks numbered by creation order |
 
 ## Creating the first admin (once)
 

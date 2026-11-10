@@ -36,6 +36,7 @@ See [deploy/DEPLOY.md](deploy/DEPLOY.md): DNS, Coolify app setup, environment va
 - `src/lib/rules.ts` – which buttons / drop targets the UI offers (the database enforces the same rules)
 - `src/app/(app)/task-actions.ts` – server actions that call the task database functions
 - `src/components/board/` – board, cards, drag and drop, task panel
+- `src/app/(app)/archive/` – Archive: search every task (server-side), filters, pages, CSV export
 - `src/components/personal/` – personal board (private per user; the browser writes directly, RLS limits everyone to their own rows)
 - `src/components/realtime-refresher.tsx` – live updates (Supabase Realtime → refresh)
 - `src/components/notification-bell.tsx` – in-app notifications
