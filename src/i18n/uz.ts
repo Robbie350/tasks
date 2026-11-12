@@ -2,6 +2,7 @@ import type { Messages } from "./index";
 
 const uz: Messages = {
   common: {
+    confirm: "Tasdiqlash",
     save: "Saqlash",
     saving: "Saqlanmoqda…",
     cancel: "Bekor qilish",
@@ -86,9 +87,11 @@ const uz: Messages = {
       many: "«Bajarilishi kerak» ustuniga {n} ta ijrochi bilan tushadi.",
       other: "«Bajarilishi kerak» ustuniga {n} ta ijrochi bilan tushadi.",
     },
-    startsUnassigned: "«Tayinlanmagan» ustuniga tushadi, uni istalgan kishi olishi mumkin.",
+    startsUnassigned: "Hech kim belgilanmagan, shuning uchun «Tayinlanmagan» ustuniga tushadi va uni istalgan kishi olishi mumkin.",
     create: "Vazifa yaratish",
     creating: "Yaratilmoqda…",
+    created: "Vazifa yaratildi",
+    createdNumber: "#{number}-vazifa yaratildi",
   },
   panel: {
     noDescription: "Tavsif yo‘q.",

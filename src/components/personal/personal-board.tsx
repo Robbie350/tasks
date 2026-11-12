@@ -42,6 +42,7 @@ import { DueDate } from "@/components/board/due-date";
 import { cn } from "@/lib/utils";
 import { createClient } from "@/lib/supabase/client";
 import { useT } from "@/i18n/client";
+import { useConfirm } from "@/components/confirm-dialog";
 import type { PCard, PColumn, PLabel, PersonalBoardData } from "@/lib/types";
 import {
   BACKGROUNDS,
@@ -85,6 +86,7 @@ export type BoardApi = {
 
 export function PersonalBoard({ initial }: { initial: PersonalBoardData }) {
   const { t } = useT();
+  const confirm = useConfirm();
   const supabase = useMemo(() => createClient(), []);
   const [columns, setColumns] = useState<PColumn[]>(initial.columns);
   const [cards, setCards] = useState<PCard[]>(initial.cards);
@@ -171,9 +173,9 @@ export function PersonalBoard({ initial }: { initial: PersonalBoardData }) {
     save(supabase.from("personal_columns").update({ position }).eq("id", id));
   }
 
-  function deleteColumn(id: string) {
+  async function deleteColumn(id: string) {
     const c = columns.find((x) => x.id === id);
-    if (!c || !confirm(t("personal.deleteColumnConfirm", { name: c.title }))) return;
+    if (!c || !(await confirm({ message: t("personal.deleteColumnConfirm", { name: c.title }), confirmLabel: t("common.delete"), danger: true }))) return;
     setColumns((cs) => cs.filter((x) => x.id !== id));
     setCards((ks) => ks.filter((k) => k.column_id !== id));
     save(supabase.from("personal_columns").delete().eq("id", id));

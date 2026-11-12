@@ -41,6 +41,7 @@ import { markNotificationsRead } from "@/app/(app)/notification-actions";
 import { OPEN_TASK } from "@/components/notification-bell";
 import { Select } from "@/components/ui/select";
 import { useT } from "@/i18n/client";
+import { useConfirm } from "@/components/confirm-dialog";
 import { TaskCard } from "./task-card";
 import { TaskPanel } from "./task-panel";
 
@@ -595,6 +596,7 @@ function ColumnMenu({
   run: (fn: () => Promise<ActionResult>) => Promise<void>;
 }) {
   const { t } = useT();
+  const confirm = useConfirm();
   const [pos, setPos] = useState<{ top: number; left: number } | null>(null);
   const buttonRef = useRef<HTMLButtonElement>(null);
   const popupRef = useRef<HTMLDivElement>(null);
@@ -662,7 +664,7 @@ function ColumnMenu({
                 <Plus className="size-4" /> {t("board.addStep")}
               </button>
             )}
-            {canAddStep && (
+            {canAddStep && !(isFirstInStage && isLastInStage) && (
               <>
                 <button className={item} disabled={isFirstInStage} onClick={() => run(() => moveBoardColumn(column.id, -1))}>
                   <ChevronLeft className="size-4" /> {t("board.moveLeft")}
@@ -677,9 +679,10 @@ function ColumnMenu({
             ) : (
               <button
                 className={cn(item, "text-destructive")}
-                onClick={() => {
+                onClick={async () => {
                   close();
-                  if (confirm(t("board.deleteStepConfirm", { name: label }))) run(() => deleteBoardColumn(column.id));
+                  if (await confirm({ message: t("board.deleteStepConfirm", { name: label }), confirmLabel: t("common.delete"), danger: true }))
+                    run(() => deleteBoardColumn(column.id));
                 }}
               >
                 <Trash2 className="size-4" /> {t("board.deleteStep")}

@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 import { useT } from "@/i18n/client";
+import { useConfirm } from "@/components/confirm-dialog";
 import type { PLabel } from "@/lib/types";
 import { COLORS, DOT, isColor, type ColorName } from "./palette";
 import type { BoardApi } from "./personal-board";
@@ -75,6 +76,7 @@ export function LabelsManager({ api }: { api: LabelStore }) {
 
 function LabelRow({ label, api }: { label: PLabel; api: LabelStore }) {
   const { t } = useT();
+  const confirm = useConfirm();
   const [name, setName] = useState(label.name);
   const color: ColorName = isColor(label.color) ? label.color : "gray";
   return (
@@ -94,7 +96,10 @@ function LabelRow({ label, api }: { label: PLabel; api: LabelStore }) {
         size="icon"
         className="size-8 shrink-0 text-muted-foreground hover:text-destructive"
         aria-label={t("common.delete")}
-        onClick={() => confirm(t("personal.deleteLabelConfirm", { name: label.name })) && api.deleteLabel(label.id)}
+        onClick={async () => {
+          if (await confirm({ message: t("personal.deleteLabelConfirm", { name: label.name }), confirmLabel: t("common.delete"), danger: true }))
+            api.deleteLabel(label.id);
+        }}
       >
         <Trash2 />
       </Button>

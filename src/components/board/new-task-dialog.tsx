@@ -1,7 +1,7 @@
 "use client";
 
 import { useActionState, useEffect, useRef, useState } from "react";
-import { Plus, X } from "lucide-react";
+import { CheckCircle2, Plus, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -28,14 +28,22 @@ export function NewTaskDialog({ people, labels = [] }: { people: Person[]; label
   // Only active managers and specialists can be assigned.
   const assignable = people.filter((p) => p.is_active && p.role !== "admin");
 
+  const [created, setCreated] = useState<string | null>(null);
+  useEffect(() => {
+    if (!created) return;
+    const timer = setTimeout(() => setCreated(null), 4000);
+    return () => clearTimeout(timer);
+  }, [created]);
+
   useEffect(() => {
     if (state?.ok) {
+      setCreated(state.number != null ? t("newTask.createdNumber", { number: state.number }) : t("newTask.created"));
       formRef.current?.reset();
       setSelected([]);
       setPickedLabels([]);
       dialogRef.current?.close();
     }
-  }, [state]);
+  }, [state, t]);
 
   const toggle = (id: string) =>
     setSelected((s) => (s.includes(id) ? s.filter((x) => x !== id) : [...s, id]));
@@ -178,6 +186,15 @@ export function NewTaskDialog({ people, labels = [] }: { people: Person[]; label
           </div>
         </form>
       </dialog>
+
+      {created && (
+        <div
+          role="status"
+          className="fixed inset-x-4 bottom-4 z-50 mx-auto flex max-w-sm items-center justify-center gap-2 rounded-lg bg-foreground px-4 py-3 text-sm text-background shadow-lg"
+        >
+          <CheckCircle2 className="size-4" aria-hidden /> {created}
+        </div>
+      )}
     </>
   );
 }

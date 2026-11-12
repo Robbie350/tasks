@@ -7,10 +7,12 @@ import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import type { Profile } from "@/lib/types";
 import { useT } from "@/i18n/client";
+import { useConfirm } from "@/components/confirm-dialog";
 import { setUserActive, updateUser, type ActionResult } from "./actions";
 
 export function UserRow({ user, isSelf }: { user: Profile; isSelf: boolean }) {
   const { t, tr } = useT();
+  const confirm = useConfirm();
   const [editing, setEditing] = useState(false);
   const [fullName, setFullName] = useState(user.full_name);
   const [role, setRole] = useState<string>(user.role);
@@ -29,11 +31,16 @@ export function UserRow({ user, isSelf }: { user: Profile; isSelf: boolean }) {
     });
   }
 
-  function toggleActive() {
+  async function toggleActive() {
     const question = user.is_active
       ? t("users.confirmDeactivate", { name: user.full_name })
       : t("users.confirmReactivate", { name: user.full_name });
-    if (!confirm(question)) return;
+    const ok = await confirm({
+      message: question,
+      confirmLabel: user.is_active ? t("users.deactivate") : t("users.reactivate"),
+      danger: user.is_active,
+    });
+    if (!ok) return;
     startTransition(async () => setResult(await setUserActive(user.id, !user.is_active)));
   }
 

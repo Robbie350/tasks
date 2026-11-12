@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { cookies } from "next/headers";
 import { PREF_COOKIES, THEME_BOOT_SCRIPT, normalizePreferences } from "@/lib/preferences";
 import { I18nProvider } from "@/i18n/client";
+import { ConfirmProvider } from "@/components/confirm-dialog";
 import { loadMessages } from "@/i18n";
 import "./globals.css";
 
@@ -38,7 +39,7 @@ export default async function RootLayout({
       </head>
       <body className="antialiased">
         <I18nProvider locale={prefs.locale} messages={messages}>
-          {children}
+          <ConfirmProvider>{children}</ConfirmProvider>
         </I18nProvider>
       </body>
     </html>

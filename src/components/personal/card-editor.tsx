@@ -9,6 +9,7 @@ import { Select } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
 import { useT } from "@/i18n/client";
+import { useConfirm } from "@/components/confirm-dialog";
 import type { PCard, PCheckItem, TaskPriority } from "@/lib/types";
 import { CHIP, COLORS, DOT, isColor, type ColorName } from "./palette";
 import type { BoardApi } from "./personal-board";
@@ -39,6 +40,7 @@ export function CardEditor({ card, api, onClose }: { card: PCard | null; api: Bo
 
 function Body({ card, api, close }: { card: PCard; api: BoardApi; close: () => void }) {
   const { t } = useT();
+  const confirm = useConfirm();
   const [title, setTitle] = useState(card.title);
   const [notes, setNotes] = useState(card.notes ?? "");
   const [newItem, setNewItem] = useState("");
@@ -260,7 +262,10 @@ function Body({ card, api, close }: { card: PCard; api: BoardApi; close: () => v
         <Button
           variant="ghost"
           className="w-full text-destructive hover:text-destructive"
-          onClick={() => confirm(t("personal.deleteCardConfirm")) && api.deleteCard(card.id)}
+          onClick={async () => {
+            if (await confirm({ message: t("personal.deleteCardConfirm"), confirmLabel: t("common.delete"), danger: true }))
+              api.deleteCard(card.id);
+          }}
         >
           <Trash2 /> {t("personal.deleteCard")}
         </Button>

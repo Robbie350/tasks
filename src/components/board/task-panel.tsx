@@ -11,6 +11,7 @@ import { cn } from "@/lib/utils";
 import type { BoardColumn, Person, Task, TaskPriority, TeamLabel } from "@/lib/types";
 import { CHIP, isColor } from "@/components/personal/palette";
 import { useT } from "@/i18n/client";
+import { useConfirm } from "@/components/confirm-dialog";
 import {
   canEdit,
   canGrab,
@@ -112,6 +113,7 @@ function PanelBody({
   close: () => void;
 }) {
   const { t, locale } = useT();
+  const confirm = useConfirm();
   const [mode, setMode] = useState<"view" | "edit" | "reject">(
     startInRejectMode && canReview(task, me) ? "reject" : "view"
   );
@@ -214,13 +216,13 @@ function PanelBody({
                     <Button
                       size="sm"
                       variant="ghost"
-                      onClick={() => {
+                      onClick={async () => {
                         const last = task.assignee_ids.length === 1;
                         const question =
                           task.status === "todo"
                             ? t("panel.leaveLastTodo")
                             : t("panel.leaveLastStay", { column: t(`status.${task.status}`) });
-                        if (!last || confirm(question))
+                        if (!last || (await confirm({ message: question, confirmLabel: t("panel.leave") })))
                           actions.leave(task);
                       }}
                     >

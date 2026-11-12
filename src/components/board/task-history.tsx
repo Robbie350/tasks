@@ -6,6 +6,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
 import { MAX_ATTACHMENT_BYTES, type Activity, type Attachment, type Note, type Person, type Task } from "@/lib/types";
 import { useT } from "@/i18n/client";
+import { useConfirm } from "@/components/confirm-dialog";
 import type { Translator } from "@/i18n";
 import type { Me } from "@/lib/rules";
 import {
@@ -201,6 +202,7 @@ function NoteItem({
   actions: BoardActions;
 }) {
   const { t } = useT();
+  const confirm = useConfirm();
   const [editing, setEditing] = useState(false);
   const [body, setBody] = useState(note.body);
   const [busy, setBusy] = useState(false);
@@ -272,7 +274,7 @@ function NoteItem({
             className="text-muted-foreground hover:text-destructive"
             disabled={busy}
             onClick={async () => {
-              if (!confirm(t("history.deleteConfirm"))) return;
+              if (!(await confirm({ message: t("history.deleteConfirm"), confirmLabel: t("common.delete"), danger: true }))) return;
               setBusy(true);
               await actions.run(() => deleteNote(note.id));
               setBusy(false);
@@ -346,6 +348,7 @@ function FilesTab({
   canWrite: boolean;
 }) {
   const { t } = useT();
+  const confirm = useConfirm();
   const [busy, setBusy] = useState(false);
   const canUpload = canWrite && task.status !== "done";
 
@@ -383,7 +386,10 @@ function FilesTab({
                   size="icon"
                   className="size-8 shrink-0 text-muted-foreground hover:text-destructive"
                   aria-label={t("history.removeFile")}
-                  onClick={() => confirm(t("history.removeFileConfirm", { name: f.file_name })) && actions.run(() => deleteAttachment(f.id))}
+                  onClick={async () => {
+                    if (await confirm({ message: t("history.removeFileConfirm", { name: f.file_name }), confirmLabel: t("history.removeFile"), danger: true }))
+                      actions.run(() => deleteAttachment(f.id));
+                  }}
                 >
                   <Trash2 />
                 </Button>

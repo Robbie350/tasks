@@ -2,6 +2,7 @@ import type { Messages } from "./index";
 
 const ru: Messages = {
   common: {
+    confirm: "Подтвердить",
     save: "Сохранить",
     saving: "Сохранение…",
     cancel: "Отмена",
@@ -86,9 +87,11 @@ const ru: Messages = {
       many: "Попадёт в «К выполнению», {n} исполнителей.",
       other: "Попадёт в «К выполнению», {n} исполнителя.",
     },
-    startsUnassigned: "Попадёт в «Не назначено», где её может взять любой.",
+    startsUnassigned: "Никто не отмечен, поэтому задача попадёт в «Не назначено», где её может взять любой.",
     create: "Создать задачу",
     creating: "Создание…",
+    created: "Задача создана",
+    createdNumber: "Задача #{number} создана",
   },
   panel: {
     noDescription: "Нет описания.",

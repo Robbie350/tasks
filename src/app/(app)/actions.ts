@@ -6,7 +6,7 @@ import { sendTaskNotifications } from "@/lib/telegram";
 import { getCurrentProfile } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 
-export type CreateTaskResult = { ok: true } | { ok: false; error: string };
+export type CreateTaskResult = { ok: true; number: number | null } | { ok: false; error: string };
 
 const PRIORITIES = ["low", "medium", "high"];
 
@@ -31,6 +31,7 @@ export async function createTask(
   if (dueDate && !/^\d{4}-\d{2}-\d{2}$/.test(dueDate))
     return { ok: false, error: "That due date isn't valid." };
 
+  let newNumber: number | null = null;
   try {
     const supabase = await createClient();
     const { data: taskId, error } = await supabase.rpc("create_task", {
@@ -44,6 +45,8 @@ export async function createTask(
     if (labelIds.length > 0 && taskId) {
       await supabase.rpc("set_task_labels", { p_task_id: taskId, p_label_ids: labelIds });
     }
+    const { data: created } = await supabase.from("tasks").select("number").eq("id", taskId).maybeSingle();
+    newNumber = (created?.number as number | undefined) ?? null;
   } catch (e) {
     console.error("create_task failed", e);
     return { ok: false, error: "Couldn't reach the server. Check your connection and try again." };
@@ -51,5 +54,5 @@ export async function createTask(
 
   after(sendTaskNotifications);
   revalidatePath("/");
-  return { ok: true };
+  return { ok: true, number: newNumber };
 }

@@ -4,6 +4,7 @@
 
 const en = {
   common: {
+    confirm: "Confirm",
     save: "Save",
     saving: "Saving…",
     cancel: "Cancel",
@@ -88,9 +89,11 @@ const en = {
       many: "Starts in To Do with {n} people.",
       other: "Starts in To Do with {n} people.",
     },
-    startsUnassigned: "Starts in Unassigned, where anyone can grab it.",
+    startsUnassigned: "Nobody ticked, so it starts in Unassigned, where anyone can grab it.",
     create: "Create task",
     creating: "Creating…",
+    created: "Task created",
+    createdNumber: "Task #{number} created",
   },
   panel: {
     noDescription: "No description.",
