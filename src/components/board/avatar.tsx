@@ -82,3 +82,32 @@ export function AvatarStack({
     </div>
   );
 }
+
+/**
+ * Avatars plus readable names, for cards:
+ * one person: full name; two: first names; three or more: "First +2".
+ * The full list is always in the tooltip.
+ */
+export function AssigneeNames({
+  people,
+  className,
+}: {
+  people: { id: string; full_name: string; avatar_url?: string | null }[];
+  className?: string;
+}) {
+  if (people.length === 0) return null;
+  const first = (name: string) => name.trim().split(/\s+/)[0];
+  const label =
+    people.length === 1
+      ? people[0].full_name
+      : people.length === 2
+        ? `${first(people[0].full_name)}, ${first(people[1].full_name)}`
+        : `${first(people[0].full_name)} +${people.length - 1}`;
+  return (
+    <span className={cn("flex min-w-0 items-center gap-1.5", className)} title={people.map((p) => p.full_name).join(", ")}>
+      {/* 3+ people: one circle and "Aziz +3", so the count isn't shown twice */}
+      <AvatarStack people={people.length >= 3 ? people.slice(0, 1) : people} />
+      <span className="truncate text-xs text-muted-foreground">{label}</span>
+    </span>
+  );
+}

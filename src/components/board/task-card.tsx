@@ -8,7 +8,7 @@ import type { Person, Task, TeamLabel } from "@/lib/types";
 import { CHIP, isColor } from "@/components/personal/palette";
 import { useT } from "@/i18n/client";
 import { canGrab, type Me } from "@/lib/rules";
-import { AvatarStack } from "./avatar";
+import { AssigneeNames } from "./avatar";
 import { DueDate } from "./due-date";
 
 const PRIORITY_EDGE = {
@@ -98,7 +98,7 @@ export function TaskCard({
 
       {(assignees.length > 0 || task.due_date || task.notes_count > 0 || task.checklist.length > 0 || task.attachments_count > 0) && (
         <div className="mt-3 flex flex-wrap items-center justify-between gap-x-2 gap-y-1.5">
-          {assignees.length > 0 ? <AvatarStack people={assignees} /> : <span />}
+          {assignees.length > 0 ? <AssigneeNames people={assignees} className="max-w-[65%]" /> : <span />}
           <div className="ml-auto flex flex-wrap items-center justify-end gap-x-2.5 gap-y-1">
             {task.checklist.length > 0 && (
               <span
