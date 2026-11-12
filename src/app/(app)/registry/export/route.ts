@@ -53,7 +53,7 @@ export async function GET(request: NextRequest) {
     t(`priority.${task.priority}`),
     task.assignee_ids.map((id) => name.get(id) ?? "").join(", "),
     task.label_ids.map((id) => label.get(id) ?? "").join(", "),
-    name.get(task.created_by) ?? "",
+    (task.created_by && name.get(task.created_by)) || "",
     day(task.created_at),
     day(task.done_at),
     task.due_date ?? "",

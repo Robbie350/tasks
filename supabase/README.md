@@ -20,6 +20,7 @@ Each script is safe to run again.
 | `0012_telegram.sql` | G | Telegram links, one-time link codes, notification sending queue |
 | `0013_board_columns.sql` | — | admin-managed steps inside To Do / In Progress / Review (`board_columns`) |
 | `0014_task_numbers.sql` | — | permanent task numbers (#1, #2, …), existing tasks numbered by creation order |
+| `0017_delete_user.sql` | — | admin deletes users: history kept as "Former user", personal data removed (`prepare_user_delete()` + ON DELETE rules) |
 | `0016_delete_task.sql` | — | `delete_task()`: the admin deletes a task with its notes, history and files |
 | `0015_dashboard.sql` | — | `dashboard_last_activity()` for the dashboard's "no activity for 7+ days" list |
 

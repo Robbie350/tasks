@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { getCurrentProfile } from "@/lib/auth";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { createClient } from "@/lib/supabase/server";
 import type { Role } from "@/lib/types";
 
 export type ActionResult = { ok: true; message?: string } | { ok: false; error: string };
@@ -138,5 +139,37 @@ export async function setUserActive(userId: string, active: boolean) {
 
     revalidatePath("/admin/users");
     return { ok: true, message: active ? "User reactivated." : "User deactivated." };
+  });
+}
+
+/**
+ * Delete a user permanently. Their login, profile, personal board,
+ * notifications, Telegram link and photo go; tasks, notes, files and history
+ * they created stay and show as "Former user".
+ */
+export async function deleteUser(userId: string) {
+  return run(async () => {
+    const me = await requireAdmin();
+    if (userId === me.id) return fail("You can't delete your own account.");
+
+    // Step 1 (database, admin checked again there): take them off their tasks
+    // the normal way, so To Do tasks left with nobody return to Unassigned.
+    const supabase = await createClient();
+    const { error } = await supabase.rpc("prepare_user_delete", { p_user_id: userId });
+    if (error) return fail(error.message);
+
+    const admin = createAdminClient();
+    // Step 2: their profile photo files.
+    const { data: photos } = await admin.storage.from("avatars").list(userId);
+    if (photos?.length) await admin.storage.from("avatars").remove(photos.map((f) => `${userId}/${f.name}`));
+
+    // Step 3: the login. The database removes the profile and everything that
+    // belongs only to them, and empties their name on shared history.
+    const { error: deleteError } = await admin.auth.admin.deleteUser(userId);
+    if (deleteError) return fail(deleteError.message);
+
+    revalidatePath("/admin/users");
+    revalidatePath("/", "layout");
+    return { ok: true, message: "User deleted." };
   });
 }

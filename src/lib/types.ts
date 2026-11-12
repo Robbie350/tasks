@@ -27,7 +27,8 @@ export type Task = {
   priority: TaskPriority;
   due_date: string | null; // YYYY-MM-DD
   position: number;
-  created_by: string;
+  /** null when the manager who created it was deleted */
+  created_by: string | null;
   created_at: string;
   assignee_ids: string[];
   notes_count: number;
@@ -55,7 +56,7 @@ export const STEP_STAGES: TaskStatus[] = ["todo", "in_progress", "review"];
 export type Attachment = {
   id: string;
   task_id: string;
-  uploaded_by: string;
+  uploaded_by: string | null; // null = deleted user
   file_name: string;
   size_bytes: number;
   mime_type: string | null;
@@ -74,7 +75,7 @@ export const ARCHIVE_AFTER_DAYS = 14;
 export type Note = {
   id: string;
   task_id: string;
-  author_id: string;
+  author_id: string | null; // null = deleted user
   body: string;
   is_rejection: boolean;
   created_at: string;
@@ -97,7 +98,7 @@ export type ActivityAction =
 export type Activity = {
   id: number;
   task_id: string;
-  actor_id: string;
+  actor_id: string | null; // null = deleted user
   action: ActivityAction;
   from_status: TaskStatus | null;
   to_status: TaskStatus | null;

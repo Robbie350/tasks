@@ -45,7 +45,7 @@ export function TaskCard({
   });
 
   // The manager who created the task.
-  const creator = people.get(task.created_by);
+  const creator = task.created_by ? people.get(task.created_by) : undefined;
   const assignees = task.assignee_ids
     .map((id) => people.get(id))
     .filter((p): p is Person => Boolean(p));

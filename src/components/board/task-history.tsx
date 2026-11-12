@@ -168,12 +168,12 @@ export function TaskHistory({
           {activity === null && !loadError && <p className="text-sm text-muted-foreground">{t("common.loading")}</p>}
           <ol className="space-y-3">
             {activity?.map((a) => {
-              const actor = people.get(a.actor_id);
+              const actor = a.actor_id ? people.get(a.actor_id) : undefined;
               return (
                 <li key={a.id} className="flex gap-3 text-sm">
-                  <Avatar id={a.actor_id} name={actor?.full_name ?? "?"} url={actor?.avatar_url} className="size-6 text-[10px] ring-0" />
+                  <Avatar id={a.actor_id ?? "former"} name={actor?.full_name ?? t("common.formerUser")} url={actor?.avatar_url} className="size-6 text-[10px] ring-0" />
                   <p className="min-w-0 flex-1">
-                    <span className="font-medium">{actor?.full_name ?? t("common.someone")}</span>{" "}
+                    <span className="font-medium">{actor?.full_name ?? t("common.formerUser")}</span>{" "}
                     {describe(a, people, t)}
                     <span className="text-muted-foreground"> · <Time iso={a.created_at} /></span>
                   </p>
@@ -206,7 +206,7 @@ function NoteItem({
   const [editing, setEditing] = useState(false);
   const [body, setBody] = useState(note.body);
   const [busy, setBusy] = useState(false);
-  const author = people.get(note.author_id);
+  const author = note.author_id ? people.get(note.author_id) : undefined;
   const mine = note.author_id === me.id && !note.is_rejection;
   const edited = new Date(note.updated_at).getTime() - new Date(note.created_at).getTime() > 1000;
 
@@ -218,7 +218,7 @@ function NoteItem({
       )}
     >
       <div className="mb-1.5 flex flex-wrap items-center gap-2 text-xs">
-        <Avatar id={note.author_id} name={author?.full_name ?? "?"} url={author?.avatar_url} className="size-6 text-[10px] ring-0" />
+        <Avatar id={note.author_id ?? "former"} name={author?.full_name ?? t("common.formerUser")} url={author?.avatar_url} className="size-6 text-[10px] ring-0" />
         <span className="font-medium">{author?.full_name ?? t("common.formerUser")}</span>
         {author && !author.is_active && <span className="text-muted-foreground">({t("common.inactive")})</span>}
         <span className="text-muted-foreground">
@@ -364,7 +364,7 @@ function FilesTab({
       {files?.length === 0 && <p className="text-sm text-muted-foreground">{t("history.noFiles")}</p>}
       <ul className="space-y-2">
         {files?.map((f) => {
-          const who = people.get(f.uploaded_by);
+          const who = f.uploaded_by ? people.get(f.uploaded_by) : undefined;
           const mayRemove = f.uploaded_by === me.id || me.role === "manager";
           return (
             <li key={f.id} className="flex items-center gap-3 rounded-lg border bg-background p-2.5">
@@ -374,7 +374,7 @@ function FilesTab({
                   {f.file_name}
                 </button>
                 <p className="truncate text-xs text-muted-foreground">
-                  {formatBytes(f.size_bytes)} · {who?.full_name ?? t("common.someone")} · <Time iso={f.created_at} />
+                  {formatBytes(f.size_bytes)} · {who?.full_name ?? t("common.formerUser")} · <Time iso={f.created_at} />
                 </p>
               </div>
               <Button variant="ghost" size="icon" className="size-8 shrink-0" aria-label={t("history.download")} onClick={() => open(f)}>

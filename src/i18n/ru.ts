@@ -196,6 +196,8 @@ const ru: Messages = {
     created: "{name} теперь может войти как {email}.",
     deactivate: "Деактивировать",
     reactivate: "Активировать",
+    delete: "Удалить",
+    confirmDelete: "Удалить {name} навсегда? Учётная запись, личная доска и уведомления будут удалены, а сотрудник — снят со всех задач. Созданные им задачи, заметки и история останутся с подписью «Бывший пользователь». Это нельзя отменить. Чтобы только запретить вход, используйте «Деактивировать».",
     confirmDeactivate: "Деактивировать {name}? Пользователь выйдет из системы и не сможет войти, пока его снова не активируют. История сохранится.",
     confirmReactivate: "Снова активировать {name}?",
     newPasswordOptional: "Новый пароль (необязательно)",
@@ -456,6 +458,8 @@ const ru: Messages = {
   },
   languages: { en: "English", ru: "Русский", uz: "O‘zbekcha" },
   serverMessages: {
+    "User deleted.": "Пользователь удалён.",
+    "You can't delete your own account.": "Нельзя удалить собственную учётную запись.",
     "Only the admin can delete tasks.": "Удалять задачи может только администратор.",
     "Only the admin can change the board's columns.": "Менять колонки доски может только администратор.",
     "New steps can only be added to To Do, In Progress or Review.": "Новые шаги можно добавлять только в «К выполнению», «В работе» или «На проверке».",

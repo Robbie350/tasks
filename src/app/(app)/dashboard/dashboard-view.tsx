@@ -163,12 +163,12 @@ function ActivityFeed({ rows, data }: { rows: ActivityRow[]; data: DashboardData
   return (
     <ol className="space-y-2.5">
       {rows.map((a) => {
-        const actor = people.get(a.actor_id);
+        const actor = a.actor_id ? people.get(a.actor_id) : undefined;
         return (
           <li key={a.id} className="flex gap-2.5 text-sm">
-            <Avatar id={a.actor_id} name={actor?.full_name ?? "?"} url={actor?.avatar_url} className="size-6 text-[10px] ring-0" />
+            <Avatar id={a.actor_id ?? "former"} name={actor?.full_name ?? t("common.formerUser")} url={actor?.avatar_url} className="size-6 text-[10px] ring-0" />
             <p className="min-w-0 flex-1 leading-snug">
-              <span className="font-medium">{actor?.full_name ?? t("common.someone")}</span> {describe(a, people, t)}
+              <span className="font-medium">{actor?.full_name ?? t("common.formerUser")}</span> {describe(a, people, t)}
               {a.task_title && (
                 <>
                   {" · "}

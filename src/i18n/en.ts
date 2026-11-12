@@ -198,6 +198,8 @@ const en = {
     created: "{name} can now sign in with {email}.",
     deactivate: "Deactivate",
     reactivate: "Reactivate",
+    delete: "Delete",
+    confirmDelete: "Delete {name} permanently? Their login, personal board and notifications are removed and they are taken off their tasks. Tasks, notes and history they created stay, shown as “Former user”. This can't be undone. To only block sign-in, use Deactivate instead.",
     confirmDeactivate: "Deactivate {name}? They will be signed out and can't sign in until reactivated. Their history stays.",
     confirmReactivate: "Reactivate {name}?",
     newPasswordOptional: "New password (optional)",

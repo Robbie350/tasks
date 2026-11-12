@@ -1,5 +1,6 @@
 "use client";
 
+import { Trash2 } from "lucide-react";
 import { useState, useTransition } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -8,7 +9,7 @@ import { Select } from "@/components/ui/select";
 import type { Profile } from "@/lib/types";
 import { useT } from "@/i18n/client";
 import { useConfirm } from "@/components/confirm-dialog";
-import { setUserActive, updateUser, type ActionResult } from "./actions";
+import { deleteUser, setUserActive, updateUser, type ActionResult } from "./actions";
 
 export function UserRow({ user, isSelf }: { user: Profile; isSelf: boolean }) {
   const { t, tr } = useT();
@@ -29,6 +30,16 @@ export function UserRow({ user, isSelf }: { user: Profile; isSelf: boolean }) {
         setNewPassword("");
       }
     });
+  }
+
+  async function remove() {
+    const ok = await confirm({
+      message: t("users.confirmDelete", { name: user.full_name }),
+      confirmLabel: t("users.delete"),
+      danger: true,
+    });
+    if (!ok) return;
+    startTransition(async () => setResult(await deleteUser(user.id)));
   }
 
   async function toggleActive() {
@@ -149,6 +160,19 @@ export function UserRow({ user, isSelf }: { user: Profile; isSelf: boolean }) {
               onClick={toggleActive}
             >
               {user.is_active ? t("users.deactivate") : t("users.reactivate")}
+            </Button>
+          )}
+          {!isSelf && (
+            <Button
+              size="sm"
+              variant="ghost"
+              className="text-destructive hover:text-destructive"
+              disabled={pending}
+              onClick={remove}
+              title={t("users.delete")}
+            >
+              <Trash2 />
+              <span className="sr-only">{t("users.delete")}</span>
             </Button>
           )}
         </div>

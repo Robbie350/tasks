@@ -196,6 +196,8 @@ const uz: Messages = {
     created: "{name} endi {email} bilan kira oladi.",
     deactivate: "Faolsizlantirish",
     reactivate: "Faollashtirish",
+    delete: "O‘chirish",
+    confirmDelete: "{name} butunlay o‘chirilsinmi? Uning hisobi, shaxsiy doskasi va bildirishnomalari o‘chiriladi, u barcha vazifalardan olib tashlanadi. U yaratgan vazifalar, izohlar va tarix «Sobiq foydalanuvchi» nomi bilan qoladi. Buni qaytarib bo‘lmaydi. Faqat kirishni taqiqlash uchun «Faolsizlantirish»dan foydalaning.",
     confirmDeactivate: "{name} faolsizlantirilsinmi? U tizimdan chiqariladi va qayta faollashtirilmaguncha kira olmaydi. Tarixi saqlanadi.",
     confirmReactivate: "{name} qayta faollashtirilsinmi?",
     newPasswordOptional: "Yangi parol (ixtiyoriy)",
@@ -456,6 +458,8 @@ const uz: Messages = {
   },
   languages: { en: "English", ru: "Русский", uz: "O‘zbekcha" },
   serverMessages: {
+    "User deleted.": "Foydalanuvchi o‘chirildi.",
+    "You can't delete your own account.": "O‘z hisobingizni o‘chira olmaysiz.",
     "Only the admin can delete tasks.": "Vazifalarni faqat administrator o‘chira oladi.",
     "Only the admin can change the board's columns.": "Doska ustunlarini faqat administrator o‘zgartira oladi.",
     "New steps can only be added to To Do, In Progress or Review.": "Yangi qadamlarni faqat «Bajarilishi kerak», «Jarayonda» yoki «Tekshiruvda»ga qo‘shish mumkin.",
