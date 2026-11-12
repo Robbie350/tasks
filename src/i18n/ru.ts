@@ -42,6 +42,7 @@ const ru: Messages = {
   },
   board: {
     title: "Доска",
+    manager: "Менеджер: {name}",
     columnMenu: "Настройки колонки",
     rename: "Переименовать",
     resetName: "Вернуть стандартное название",

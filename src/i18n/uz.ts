@@ -42,6 +42,7 @@ const uz: Messages = {
   },
   board: {
     title: "Doska",
+    manager: "Menejer: {name}",
     columnMenu: "Ustun sozlamalari",
     rename: "Nomini o‘zgartirish",
     resetName: "Standart nomga qaytarish",

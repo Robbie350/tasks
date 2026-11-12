@@ -8,7 +8,7 @@ import type { Person, Task, TeamLabel } from "@/lib/types";
 import { CHIP, isColor } from "@/components/personal/palette";
 import { useT } from "@/i18n/client";
 import { canGrab, type Me } from "@/lib/rules";
-import { AssigneeNames } from "./avatar";
+import { AssigneeNames, Avatar } from "./avatar";
 import { DueDate } from "./due-date";
 
 const PRIORITY_EDGE = {
@@ -44,6 +44,8 @@ export function TaskCard({
     disabled: !draggable || overlay,
   });
 
+  // The manager who created the task.
+  const creator = people.get(task.created_by);
   const assignees = task.assignee_ids
     .map((id) => people.get(id))
     .filter((p): p is Person => Boolean(p));
@@ -134,6 +136,12 @@ export function TaskCard({
         </div>
       )}
 
+      {creator && (
+        <p className="mt-2 flex items-center gap-1.5 border-t pt-2 text-[11px] text-muted-foreground" title={creator.full_name}>
+          <Avatar id={creator.id} name={creator.full_name} url={creator.avatar_url} className="size-4 text-[7px] ring-0" />
+          <span className="truncate">{t("board.manager", { name: creator.full_name })}</span>
+        </p>
+      )}
       {!overlay && onGrab && canGrab(task, me) && (
         <Button
           size="sm"

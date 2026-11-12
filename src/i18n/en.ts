@@ -44,6 +44,7 @@ const en = {
   },
   board: {
     title: "Board",
+    manager: "Manager: {name}",
     columnMenu: "Column options",
     rename: "Rename",
     resetName: "Use default name",
