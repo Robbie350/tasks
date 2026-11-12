@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { X } from "lucide-react";
+import { Trash2, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -23,7 +23,7 @@ import {
   isAssignee,
   type Me,
 } from "@/lib/rules";
-import { rejectTask, setTaskLabels, updateTask } from "@/app/(app)/task-actions";
+import { deleteTask, rejectTask, setTaskLabels, updateTask } from "@/app/(app)/task-actions";
 import type { BoardActions } from "./board";
 import { Avatar } from "./avatar";
 import { DueDate } from "./due-date";
@@ -316,6 +316,25 @@ function PanelBody({
           </>
         )}
       </div>
+
+      {me.role === "admin" && mode === "view" && (
+        <footer className="border-t p-4">
+          <Button
+            variant="ghost"
+            className="w-full text-destructive hover:text-destructive"
+            onClick={async () => {
+              const ok = await confirm({
+                message: t("panel.deleteTaskConfirm", { number: task.number ?? "", title: task.title }),
+                confirmLabel: t("panel.deleteTask"),
+                danger: true,
+              });
+              if (ok && (await actions.run(() => deleteTask(task.id)))) close();
+            }}
+          >
+            <Trash2 /> {t("panel.deleteTask")}
+          </Button>
+        </footer>
+      )}
 
       {canEdit(me) && mode === "view" && (
         <footer className="border-t p-4">

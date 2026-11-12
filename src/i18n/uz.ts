@@ -115,6 +115,8 @@ const uz: Messages = {
     created: "Yaratilgan",
     editTask: "Vazifani tahrirlash",
     saveChanges: "O‘zgarishlarni saqlash",
+    deleteTask: "Vazifani o‘chirish",
+    deleteTaskConfirm: "#{number} «{title}» vazifasi o‘chirilsinmi? Uning izohlari, fayllari, ro‘yxati va tarixi ham o‘chiriladi. Buni qaytarib bo‘lmaydi.",
     checklist: "Ro‘yxat",
     addItem: "Qo‘shish",
     itemPlaceholder: "Yangi band…",
@@ -454,6 +456,7 @@ const uz: Messages = {
   },
   languages: { en: "English", ru: "Русский", uz: "O‘zbekcha" },
   serverMessages: {
+    "Only the admin can delete tasks.": "Vazifalarni faqat administrator o‘chira oladi.",
     "Only the admin can change the board's columns.": "Doska ustunlarini faqat administrator o‘zgartira oladi.",
     "New steps can only be added to To Do, In Progress or Review.": "Yangi qadamlarni faqat «Bajarilishi kerak», «Jarayonda» yoki «Tekshiruvda»ga qo‘shish mumkin.",
     "A column name can have up to 40 characters.": "Ustun nomi 40 belgigacha bo‘lishi mumkin.",

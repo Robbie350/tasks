@@ -117,6 +117,8 @@ const en = {
     created: "Created",
     editTask: "Edit task",
     saveChanges: "Save changes",
+    deleteTask: "Delete task",
+    deleteTaskConfirm: "Delete task #{number} “{title}”? Its notes, files, checklist and history are deleted too. This can't be undone.",
     checklist: "Checklist",
     addItem: "Add",
     itemPlaceholder: "Add an item…",

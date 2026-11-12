@@ -311,3 +311,25 @@ export async function moveBoardColumn(id: string, dir: -1 | 1) {
 export async function deleteBoardColumn(id: string) {
   return call("delete_board_column", { p_id: id });
 }
+
+// ---------------------------------------------------------------------------
+// Admin: delete a task permanently (with its notes, history and files)
+// ---------------------------------------------------------------------------
+export async function deleteTask(taskId: string): Promise<ActionResult> {
+  try {
+    const supabase = await createClient();
+    // The database checks the caller is the admin and returns the task's file paths.
+    const { data: paths, error } = await supabase.rpc("delete_task", { p_task_id: taskId });
+    if (error) return { ok: false, error: error.message };
+    if (Array.isArray(paths) && paths.length > 0) {
+      const { error: storageError } = await createAdminClient().storage.from(BUCKET).remove(paths as string[]);
+      if (storageError) console.error("delete_task: files not removed", storageError);
+    }
+  } catch (e) {
+    console.error("deleteTask failed", e);
+    return { ok: false, error: OFFLINE };
+  }
+  revalidatePath("/");
+  revalidatePath("/registry");
+  return { ok: true };
+}

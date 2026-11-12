@@ -115,6 +115,8 @@ const ru: Messages = {
     created: "Создана",
     editTask: "Изменить задачу",
     saveChanges: "Сохранить изменения",
+    deleteTask: "Удалить задачу",
+    deleteTaskConfirm: "Удалить задачу #{number} «{title}»? Её заметки, файлы, чек-лист и история тоже будут удалены. Это нельзя отменить.",
     checklist: "Чек-лист",
     addItem: "Добавить",
     itemPlaceholder: "Новый пункт…",
@@ -454,6 +456,7 @@ const ru: Messages = {
   },
   languages: { en: "English", ru: "Русский", uz: "O‘zbekcha" },
   serverMessages: {
+    "Only the admin can delete tasks.": "Удалять задачи может только администратор.",
     "Only the admin can change the board's columns.": "Менять колонки доски может только администратор.",
     "New steps can only be added to To Do, In Progress or Review.": "Новые шаги можно добавлять только в «К выполнению», «В работе» или «На проверке».",
     "A column name can have up to 40 characters.": "Название колонки — до 40 символов.",
