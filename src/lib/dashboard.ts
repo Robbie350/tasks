@@ -1,6 +1,6 @@
 import "server-only";
 import { createClient } from "@/lib/supabase/server";
-import { TASK_COLUMNS, sortColumns, toTask } from "@/lib/board";
+import { BASE_TASK_COLUMNS, TASK_COLUMNS, isMissingSchema, sortColumns, toTask } from "@/lib/board";
 import { STAGE_ORDER, type Activity, type BoardColumn, type Person, type Task } from "@/lib/types";
 
 export type ActivityRow = Activity & { task_number: number | null; task_title: string };
@@ -36,7 +36,7 @@ export async function getDashboard(me: { id: string; role: string }): Promise<Da
   const isLead = me.role === "manager" || me.role === "admin";
   const ACT = "id, task_id, actor_id, action, from_status, to_status, details, created_at, tasks(number, title)";
 
-  const [open, cols, people, mine, notices, myAct] = await Promise.all([
+  const [firstOpen, cols, people, mine, notices, myAct] = await Promise.all([
     supabase.from("tasks").select(TASK_COLUMNS).neq("status", "done").order("position"),
     supabase.from("board_columns").select("id, stage, title, position, is_builtin").returns<BoardColumn[]>(),
     supabase.from("profiles").select("id, full_name, role, is_active, avatar_url").order("full_name").returns<Person[]>(),
@@ -86,6 +86,10 @@ export async function getDashboard(me: { id: string; role: string }): Promise<Da
     };
   }
 
+  // Newer database script not run yet: use the basic columns instead of failing.
+  const open = isMissingSchema(firstOpen.error)
+    ? await supabase.from("tasks").select(BASE_TASK_COLUMNS).neq("status", "done").order("position")
+    : firstOpen;
   if (open.error) throw new Error(`Couldn't load tasks: ${open.error.message}`);
 
   return {

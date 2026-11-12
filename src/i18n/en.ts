@@ -399,6 +399,7 @@ const en = {
     next: "Next",
   },
   dashboard: {
+    loadError: "The dashboard couldn't load. If this mentions a missing column or function, run the latest scripts in supabase/migrations, then reload.",
     title: "Dashboard",
     hello: "Hello, {name}",
     tabMine: "My work",

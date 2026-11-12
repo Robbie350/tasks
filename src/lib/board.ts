@@ -25,6 +25,22 @@ type TaskRow = Omit<Task, "number" | "assignee_ids" | "notes_count" | "label_ids
 export const TASK_COLUMNS =
   "id, number, title, description, status, priority, due_date, position, created_by, created_at, label_ids, done_at, checklist, column_id, task_assignees(user_id), task_notes(count), task_attachments(count)";
 
+/** The original columns (steps 4-6). Used when newer database scripts haven't been run yet. */
+export const BASE_TASK_COLUMNS =
+  "id, title, description, status, priority, due_date, position, created_by, created_at, task_assignees(user_id), task_notes(count)";
+
+/** True when a query failed because a column / table from a newer script is missing. */
+export function isMissingSchema(error: { code?: string; message?: string } | null | undefined) {
+  if (!error) return false;
+  return (
+    error.code === "42703" || // undefined column
+    error.code === "42P01" || // undefined table
+    error.code === "PGRST200" || // relationship not found
+    error.code === "PGRST204" || // column not found
+    /does not exist|could not find/i.test(error.message ?? "")
+  );
+}
+
 export function toTask({ task_assignees, task_notes, task_attachments, ...t }: TaskRow): Task {
   return {
     ...t,
@@ -57,7 +73,7 @@ export async function getBoardData(): Promise<{
   const supabase = await createClient();
   const cutoff = archiveCutoff();
 
-  const [tasksRes, peopleRes, unreadRes, labelsRes, archivedRes, columnsRes] = await Promise.all([
+  const [firstTasksRes, peopleRes, unreadRes, labelsRes, archivedRes, columnsRes] = await Promise.all([
     supabase
       .from("tasks")
       .select(TASK_COLUMNS)
@@ -81,6 +97,14 @@ export async function getBoardData(): Promise<{
     supabase.from("board_columns").select("id, stage, title, position, is_builtin").returns<BoardColumn[]>(),
   ]);
 
+  // If a newer database script hasn't been run, fall back to the basic columns
+  // so the board still works (without numbers, labels, steps...).
+  const tasksRes = isMissingSchema(firstTasksRes.error)
+    ? await supabase.from("tasks").select(BASE_TASK_COLUMNS).order("position").returns<TaskRow[]>()
+    : firstTasksRes;
+  if (isMissingSchema(firstTasksRes.error)) {
+    console.warn("Board: falling back to basic task columns. Run the latest supabase/migrations scripts.", firstTasksRes.error?.message);
+  }
   if (tasksRes.error) throw new Error(`Couldn't load tasks: ${tasksRes.error.message}`);
   if (peopleRes.error) throw new Error(`Couldn't load people: ${peopleRes.error.message}`);
 

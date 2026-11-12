@@ -397,6 +397,7 @@ const uz: Messages = {
     next: "Keyingi",
   },
   dashboard: {
+    loadError: "Boshqaruv panelini yuklab bo‘lmadi. Agar quyida yo‘q ustun yoki funksiya haqida yozilgan bo‘lsa, supabase/migrations’dagi so‘nggi skriptlarni ishga tushiring va sahifani yangilang.",
     title: "Boshqaruv paneli",
     hello: "Salom, {name}",
     tabMine: "Mening ishlarim",
