@@ -73,19 +73,32 @@ export function ArchiveView({
     },
   };
 
-  const href = (patch: Partial<Record<keyof ArchiveQuery, string | number>>) => {
+  const href = (patch: Partial<Record<keyof ArchiveQuery, string | number | boolean>>) => {
     const p = new URLSearchParams();
-    const merged = { ...query, ...patch } as Record<string, string | number>;
+    const merged = { ...query, ...patch } as Record<string, string | number | boolean>;
     for (const [k, v] of Object.entries(merged)) {
-      if (v === "" || (k === "page" && v === 1) || (k === "scope" && v === "done") || (k === "sort" && v === "finished_desc")) continue;
+      if (v === "" || v === false || (k === "page" && v === 1) || (k === "scope" && v === "open") || (k === "sort" && v === "finished_desc")) continue;
+      if (v === true) {
+        p.set(k, "1");
+        continue;
+      }
       p.set(k, String(v));
     }
     const s = p.toString();
-    return `/archive${s ? `?${s}` : ""}`;
+    return `/registry${s ? `?${s}` : ""}`;
   };
-  const exportHref = href({ page: 1 }).replace("/archive", "/archive/export");
+  const exportHref = href({ page: 1 }).replace("/registry", "/registry/export");
 
   const openTask = tasks.find((x) => x.id === openId) ?? null;
+  const today = (() => {
+    const d = new Date();
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+  })();
+  // Name of an added step (built-in columns just show the status).
+  const stepName = (task: Task) => {
+    const c = columns.find((x) => x.id === task.column_id);
+    return c?.title && c.title !== t(`status.${c.stage}`) ? c.title : null;
+  };
   const dateOf = (task: Task) => (query.scope === "done" ? task.done_at : task.created_at);
 
   return (
@@ -96,18 +109,20 @@ export function ArchiveView({
       </div>
 
       {/* Filters: a plain GET form, so results have a shareable URL */}
-      <form action="/archive" method="get" className="grid gap-3 rounded-xl border bg-card p-4 shadow-xs md:grid-cols-6">
+      <form action="/registry" method="get" className="grid gap-3 rounded-xl border bg-card p-4 shadow-xs md:grid-cols-6">
         <div className="relative md:col-span-3">
           <Search className="pointer-events-none absolute top-1/2 left-2.5 size-4 -translate-y-1/2 text-muted-foreground" />
           <Input name="q" type="search" defaultValue={query.q} placeholder={t("archive.search")} aria-label={t("archive.search")} className="pl-8" />
         </div>
         <Select name="scope" defaultValue={query.scope} aria-label={t("archive.scopeDone")} className="md:col-span-1">
+          <option value="open">{t("archive.scopeOpen")}</option>
           <option value="done">{t("archive.scopeDone")}</option>
           <option value="all">{t("archive.scopeAll")}</option>
         </Select>
         <Select name="sort" defaultValue={query.sort} aria-label={t("archive.sort")} className="md:col-span-2">
           <option value="finished_desc">{t("archive.sortFinishedDesc")}</option>
           <option value="finished_asc">{t("archive.sortFinishedAsc")}</option>
+          <option value="due_asc">{t("archive.sortDue")}</option>
           <option value="number_desc">{t("archive.sortNumberDesc")}</option>
           <option value="number_asc">{t("archive.sortNumberAsc")}</option>
           <option value="title">{t("archive.sortTitle")}</option>
@@ -150,13 +165,25 @@ export function ArchiveView({
             {t("archive.apply")}
           </Button>
           <Button asChild variant="ghost">
-            <Link href="/archive">{t("archive.reset")}</Link>
+            <Link href="/registry">{t("archive.reset")}</Link>
           </Button>
         </div>
       </form>
 
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <p className="text-sm font-medium">{tn("archive.results", total)}</p>
+        <div className="flex flex-wrap items-center gap-4">
+          <p className="text-sm font-medium">{tn("archive.results", total)}</p>
+          <Link
+            href={href({ overdue: !query.overdue, page: 1 })}
+            aria-pressed={query.overdue}
+            className={cn(
+              "rounded-full border px-3 py-1 text-xs font-medium",
+              query.overdue ? "border-red-300 bg-red-50 text-red-700 dark:border-red-900 dark:bg-red-950/50 dark:text-red-300" : "text-muted-foreground hover:text-foreground"
+            )}
+          >
+            {t("archive.overdueOnly")}
+          </Link>
+        </div>
         <Button asChild variant="outline" size="sm">
           <a href={exportHref}>
             <Download /> {t("archive.export")}
@@ -173,7 +200,8 @@ export function ArchiveView({
               <th className="w-16 px-4 py-3 font-medium">{t("archive.colNumber")}</th>
               <th className="px-4 py-3 font-medium">{t("archive.colTask")}</th>
               <th className="px-4 py-3 font-medium">{t("archive.colPeople")}</th>
-              {query.scope === "all" && <th className="px-4 py-3 font-medium">{t("archive.colStatus")}</th>}
+              {query.scope !== "done" && <th className="px-4 py-3 font-medium">{t("archive.colStep")}</th>}
+              {query.scope !== "done" && <th className="px-4 py-3 font-medium">{t("archive.colDue")}</th>}
               <th className="px-4 py-3 text-right font-medium">
                 {query.scope === "done" ? t("archive.colFinished") : t("archive.colCreated")}
               </th>
@@ -212,7 +240,24 @@ export function ArchiveView({
                     )}
                   </td>
                   <td className="px-4 py-3">{assignees.length > 0 ? <AvatarStack people={assignees} max={4} /> : "—"}</td>
-                  {query.scope === "all" && <td className="px-4 py-3 text-muted-foreground">{t(`status.${task.status}`)}</td>}
+                  {query.scope !== "done" && (
+                    <td className="px-4 py-3 text-muted-foreground">
+                      {t(`status.${task.status}`)}
+                      {stepName(task) && <span className="block text-xs">{stepName(task)}</span>}
+                    </td>
+                  )}
+                  {query.scope !== "done" && (
+                    <td
+                      className={cn(
+                        "px-4 py-3 whitespace-nowrap tabular-nums",
+                        task.due_date && task.status !== "done" && task.due_date < today
+                          ? "font-medium text-red-600 dark:text-red-400"
+                          : "text-muted-foreground"
+                      )}
+                    >
+                      {task.due_date ? formatDay(task.due_date, months) : "—"}
+                    </td>
+                  )}
                   <td className="px-4 py-3 text-right whitespace-nowrap text-muted-foreground tabular-nums">
                     {date ? formatDay(date.slice(0, 10), months) : "—"}
                   </td>
@@ -221,7 +266,7 @@ export function ArchiveView({
             })}
             {tasks.length === 0 && !error && (
               <tr>
-                <td colSpan={5} className="px-4 py-10 text-center text-muted-foreground">
+                <td colSpan={6} className="px-4 py-10 text-center text-muted-foreground">
                   {t("archive.empty")}
                 </td>
               </tr>

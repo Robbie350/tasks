@@ -4,12 +4,14 @@ import { TASK_COLUMNS, toTask } from "@/lib/board";
 import type { Task } from "@/lib/types";
 
 export const ARCHIVE_PAGE_SIZE = 50;
-export const SORTS = ["finished_desc", "finished_asc", "number_desc", "number_asc", "title"] as const;
+export const SORTS = ["finished_desc", "finished_asc", "due_asc", "number_desc", "number_asc", "title"] as const;
 export type ArchiveSort = (typeof SORTS)[number];
 
 export type ArchiveQuery = {
   q: string;
-  scope: "done" | "all";
+  /** open = not finished (default), done = finished, all = everything */
+  scope: "open" | "done" | "all";
+  overdue: boolean;
   person: string;
   label: string;
   from: string; // YYYY-MM-DD
@@ -27,7 +29,8 @@ export function parseArchiveQuery(sp: Record<string, string | string[] | undefin
   const sort = one("sort") as ArchiveSort;
   return {
     q: one("q").trim().slice(0, 100),
-    scope: one("scope") === "all" ? "all" : "done",
+    scope: one("scope") === "all" ? "all" : one("scope") === "done" ? "done" : "open",
+    overdue: one("overdue") === "1",
     person: UUID.test(one("person")) ? one("person") : "",
     label: UUID.test(one("label")) ? one("label") : "",
     from: DATE.test(one("from")) ? one("from") : "",
@@ -64,6 +67,7 @@ export async function queryArchive(
     req = req.eq("number", Number(numberMatch[1])); // a number finds that task in any column
   } else {
     if (query.scope === "done") req = req.eq("status", "done");
+    if (query.scope === "open") req = req.neq("status", "done");
     if (query.q) {
       // Escape characters that have meaning in PostgREST filters and LIKE patterns.
       const safe = query.q.replace(/[\\%_]/g, (c) => `\\${c}`).replace(/[,()"]/g, " ");
@@ -71,6 +75,10 @@ export async function queryArchive(
     }
   }
   if (personTaskIds) req = req.in("id", personTaskIds);
+  if (query.overdue) {
+    const today = new Date().toISOString().slice(0, 10);
+    req = req.neq("status", "done").lt("due_date", today);
+  }
   if (query.label) req = req.contains("label_ids", [query.label]);
   // Date range applies to the finish date (or creation date when showing all tasks).
   const dateField = query.scope === "done" ? "done_at" : "created_at";
@@ -78,6 +86,9 @@ export async function queryArchive(
   if (query.to) req = req.lte(dateField, `${query.to}T23:59:59.999`);
 
   switch (query.sort) {
+    case "due_asc":
+      req = req.order("due_date", { ascending: true, nullsFirst: false });
+      break;
     case "finished_asc":
       req = req.order(dateField, { ascending: true, nullsFirst: false });
       break;

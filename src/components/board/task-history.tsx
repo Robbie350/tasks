@@ -36,7 +36,7 @@ function Time({ iso }: { iso: string }) {
 // ---------------------------------------------------------------------------
 // Activity sentences, e.g. "Aziz moved this to Review".
 // ---------------------------------------------------------------------------
-function describe(a: Activity, people: Map<string, Person>, t: Translator["t"]) {
+export function describe(a: Activity, people: Map<string, Person>, t: Translator["t"]) {
   const name = (id: unknown) =>
     (typeof id === "string" && people.get(id)?.full_name) || t("common.someone");
   const column = a.to_status ? t(`status.${a.to_status}`) : "";

@@ -345,7 +345,7 @@ export function Board({
       {q && (
         <p className="-mt-2 mb-3 text-xs">
           <a
-            href={`/archive?scope=all&q=${encodeURIComponent(query.trim())}`}
+            href={`/registry?scope=all&q=${encodeURIComponent(query.trim())}`}
             className="text-muted-foreground underline-offset-4 hover:text-foreground hover:underline"
           >
             {t("board.searchArchive", { q: query.trim() })}
